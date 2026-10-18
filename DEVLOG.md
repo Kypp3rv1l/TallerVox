@@ -1,5 +1,10 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.1
+- El catálogo trae 24 casas generadas por el juego (8 tipos × 3 variantes, sin el terreno de debajo), con captura. Se sacaron del juego con la nueva función de núcleo `VoxelWorld.export_clipboard(pos)` y la prueba `--only=export_houses` del repo de Farlands.
+- `dev_thumbs.gd` (`--thumbs`): genera las capturas que falten en el catálogo.
+- Nota: `editor.gd` se edita directamente (ya no se regenera desde el editor del juego).
+
 ## v0.1.0
 Primera versión del Taller como herramienta aparte.
 
