@@ -4,7 +4,7 @@ extends Node3D
 
 const Look = preload("res://look.gd")
 const TallerEditor := preload("res://editor.gd")
-const VERSION := "0.1.2"
+const VERSION := "0.1.3"
 const GAME_VERSION := "taller-0.1.0"
 const FLAT_Y := 200            # el suelo termina en el bloque 199: lo que se construye empieza en y = 200
 const SEED := 7777

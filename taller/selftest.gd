@@ -22,6 +22,8 @@ func _ready() -> void:
 		await get_tree().process_frame
 	_chk(main.ready_world, "el mundo plano carga")
 	var ed: Node = main.editor
+	w.clear_edits()   # el autoguardado de una sesion anterior no debe ensuciar las pruebas
+	await get_tree().create_timer(1.0).timeout
 	_chk(w.is_solid_at(Vector3(6.0, 99.8, 6.0)), "suelo: sólido bajo y=200 bloques")
 	_chk(not w.is_solid_at(Vector3(6.0, 100.3, 6.0)), "suelo: aire sobre y=200 bloques")
 	_chk(not w.is_solid_at(Vector3(300.0, 100.3, -300.0)), "suelo plano también lejos")
@@ -29,6 +31,7 @@ func _ready() -> void:
 	ed.doc_kind = 0
 	ed.doc_size = Vector3i(24, 48, 20)
 	ed.doc_name = "prueba_casa"
+	w.clear_edits()
 	ed._begin_txn()
 	w.edit_set_cubes(Vector3i(2, 200, 3), Vector3i(9, 205, 7), 9, 0, 0, 0)    # caja de piedra 8x6x5
 	w.edit_set_cubes(Vector3i(3, 201, 4), Vector3i(8, 204, 6), 0, 0, 0, 0)    # hueco
@@ -38,7 +41,7 @@ func _ready() -> void:
 	ed._end_txn()
 	var st: Dictionary = w.edits_stats()
 	_chk(int(st["cubes"]) > 100, "ediciones: cubos en el mundo plano (%d)" % int(st["cubes"]))
-	_chk(int(st["fine"]) == 1, "ediciones: 1 voxel fino")
+	_chk(int(st["fine"]) == 1, "ediciones: 1 voxel fino (%s)" % str(st))
 	_chk(pid > 0, "ediciones: objeto del catálogo colocado")
 	# --- archivo
 	var text: String = ed.build_doc_text()
@@ -61,6 +64,75 @@ func _ready() -> void:
 	_chk(err == "", "cargar el archivo: " + err)
 	_chk(int(w.edits_stats()["cubes"]) == int(st["cubes"]), "ida y vuelta: mismos cubos")
 	_chk(w.edit_block_at(2, 200, 3) == 9 and w.edit_block_at(5, 202, 5) == 0, "ida y vuelta: bloque y hueco")
+	# --- seleccionar objetos (grupos de cajas pequenas)
+	ed.doc_kind = 0
+	ed.doc_size = Vector3i(24, 48, 20)
+	w.clear_edits()
+	ed._begin_txn()
+	var b1: int = w.edit_add_fine(Vector3(2, 200, 2), Vector3(4, 200.5, 3), 200, 50, 50, 0, false)
+	var b2: int = w.edit_add_fine(Vector3(2, 200.5, 2), Vector3(2.5, 201, 3), 100, 50, 50, 0, false)
+	var b3: int = w.edit_add_fine(Vector3(3.5, 200.5, 2), Vector3(4, 201, 3), 100, 50, 50, 0, false)
+	var c1: int = w.edit_add_fine(Vector3(10, 200, 10), Vector3(11, 200.5, 11), 90, 90, 200, 0, false)
+	ed._flush()
+	ed._end_txn()
+	var cl: Array = ed._gr_cluster(b2)
+	_chk(cl.size() == 3, "seleccionar: el objeto completo agrupa sus 3 cajas (%d)" % cl.size())
+	_chk(ed._gr_cluster(c1).size() == 1, "seleccionar: el cofre aparte es otro objeto")
+	ed.tool = ed.T_SELECT
+	ed._group_set(cl, [], false)
+	_chk(ed.sel.get("type", "") == "group" and Vector3(ed.sel["mn"]).is_equal_approx(Vector3(2, 200, 2)), "seleccionar: grupo con su caja envolvente")
+	ed.step_i = 0
+	ed._group_move(Vector3i(1, 0, 0))
+	var after: Array = ed._all_fines()
+	var minx := 999.0
+	for f in after:
+		if Vector3(f["mn"]).z < 5.0:
+			minx = minf(minx, Vector3(f["mn"]).x)
+	_chk(after.size() == 4 and is_equal_approx(minx, 3.0), "seleccionar: mover el grupo 1 bloque (x=%s)" % str(minx))
+	ed.step_i = 2
+	ed._group_move(Vector3i(0, 0, 1))
+	var zmin := 999.0
+	for f in ed._all_fines():
+		if Vector3(f["mn"]).x < 8.0:
+			zmin = minf(zmin, Vector3(f["mn"]).z)
+	_chk(is_equal_approx(zmin, 2.125), "seleccionar: paso fino 1/8 (z=%s)" % str(zmin))
+	var bb0: Vector3 = Vector3(ed.sel["mx"]) - Vector3(ed.sel["mn"])
+	ed._group_rotate()
+	var bb1: Vector3 = Vector3(ed.sel["mx"]) - Vector3(ed.sel["mn"])
+	_chk(is_equal_approx(bb0.x, bb1.z) and is_equal_approx(bb0.z, bb1.x) and ed.sel["fines"].size() == 3, "seleccionar: girar intercambia ancho y fondo")
+	ed._group_move(Vector3i(0, -1, 0))
+	_chk(Vector3(ed.sel["mn"]).y >= 200.0, "seleccionar: no baja del suelo")
+	var g2: Dictionary = ed._gr_in_box(Vector3(0, 200, 0), Vector3(8, 205, 8))
+	_chk(g2["fines"].size() == 3 and g2["placed"].is_empty(), "seleccionar: caja elige lo de dentro")
+	ed._delete_sel()
+	_chk(ed._all_fines().size() == 1, "seleccionar: borrar el grupo deja solo el cofre")
+	w.edit_undo()
+	_chk(ed._all_fines().size() == 4, "seleccionar: deshacer devuelve el grupo")
+	ed.sel = {}
+	ed.tool = ed.T_BLOCK
+	_chk(ed._ray_flags() == 1, "rayo: bloques solos con la herramienta Bloque")
+	ed.tool = ed.T_MOVE
+	_chk((ed._ray_flags() & 12) == 12, "rayo: Mover ve cajas pequeñas y objetos")
+	ed.tool = ed.T_BLOCK
+	# --- casa del juego: los muebles se agrupan por objeto
+	var hp: String = ed.catalog_dir() + "/estructuras/casa_2_plantas_2.json"
+	if FileAccess.file_exists(hp):
+		w.clear_edits()
+		ed.load_doc_text(FileAccess.get_file_as_string(hp))
+		var hf: Array = ed._all_fines()
+		var seen := {}
+		var sizes: Array = []
+		for f in hf:
+			if seen.has(int(f["id"])):
+				continue
+			var c2: Array = ed._gr_cluster(int(f["id"]))
+			for q in c2:
+				seen[int(q["id"])] = true
+			sizes.append(c2.size())
+		sizes.sort()
+		print("INFO casa: %d cajas finas en %d objetos; mayores: %s" % [hf.size(), sizes.size(), str(sizes.slice(maxi(0, sizes.size() - 5)))])
+		_chk(sizes.size() > 5 and sizes[sizes.size() - 1] < hf.size(), "casa real: las cajas finas se separan en varios objetos")
+		w.clear_edits()
 	# --- estampar (giro 0 y 1) en un documento zona
 	var sd: Dictionary = d
 	ed.doc_kind = 1

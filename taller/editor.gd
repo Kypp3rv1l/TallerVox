@@ -28,7 +28,7 @@ const TOOL_HELP := [
 	"Clic izq en dos esquinas: aplica la acción elegida a la caja · Clic der: cancelar. La acción se elige en el panel.",
 	"Clic izq: borrar el detalle apuntado (ventana, marco, mueble, farol…) · Clic der: restaurar los detalles borrados alrededor · Supr: borrar.",
 	"Clic izq: poner un voxel pequeño (1/8) pegado a la cara apuntada · Clic der: quitar el voxel/detalle apuntado · Clic central: copiar su color · Rueda: tamaño.",
-	"Elige un objeto en la pestaña Catálogo · Clic izq: colocar · Clic der: quitar el objeto apuntado · R: girar · Flechas/RePág/AvPág: mover · Inicio: reiniciar.",
+	"Elige un objeto en la pestaña Objetos · Clic izq: colocar · Clic der: quitar el objeto apuntado · R: girar · Flechas/RePág/AvPág: mover · Inicio: reiniciar.",
 	"Clic izq: elegir la estructura bajo el cursor (se resalta) · Los ajustes están en la pestaña Estructura.",
 	"Pega lo copiado con la herramienta Caja · Clic izq: pegar · Mayús+clic: pegar también el aire · R: girar.",
 	"Muestra qué hay bajo el cursor · Clic izq: copiar las coordenadas al portapapeles.",
@@ -302,7 +302,8 @@ func _build_ui() -> void:
 	root.add_child(panel)
 	tabs = TabContainer.new()
 	tabs.custom_minimum_size = Vector2(408, 0)
-	tabs.add_theme_font_size_override("font_size", 13)
+	tabs.add_theme_font_size_override("font_size", 12)
+	tabs.clip_tabs = false
 	panel.add_child(tabs)
 	_build_tab_tools()
 	_build_tab_blocks()
@@ -327,7 +328,7 @@ func _tab(name: String) -> VBoxContainer:
 
 
 func _build_tab_tools() -> void:
-	var v := _tab("Herram.")
+	var v := _tab("Herram")
 	var grid := GridContainer.new()
 	grid.columns = 3
 	v.add_child(grid)
@@ -527,7 +528,7 @@ func _build_tab_blocks() -> void:
 
 
 func _build_tab_catalog() -> void:
-	var v := _tab("Catálogo")
+	var v := _tab("Objetos")
 	cat_search = LineEdit.new()
 	cat_search.placeholder_text = "Buscar objeto (ventana, cama, farol…)"
 	cat_search.text_changed.connect(func(_t: String) -> void: _fill_catalog())
@@ -2241,7 +2242,7 @@ func add_note() -> void:
 # =============================================================================================
 
 const FLAT_Y := 200                       # el suelo llega hasta el bloque 199; lo construido empieza en y = 200
-const LIM_STRUCT := Vector3i(32, 64, 32)  # estructura: caben la casa mas grande (22 x 13) y la torre mas alta, con margen
+const LIM_STRUCT := Vector3i(96, 128, 96)  # estructura: casas x2 (hasta ~50 x 40), torres y arboles grandes
 const LIM_ZONE := Vector3i(512, 320, 512) # zona: poblado grande o arbol gigante (256 x 160 x 256 m)
 const FACING_NAMES := ["Norte (−Z)", "Este (+X)", "Sur (+Z)", "Oeste (−X)"]
 const FACING_KEYS := ["norte", "este", "sur", "oeste"]
@@ -3028,7 +3029,7 @@ func _build_tab_creations() -> void:
 	stamp_label = _lbl("", 13, Color(0.9, 0.95, 1.0), 370.0)
 	o.add_child(stamp_label)
 	o.add_child(_btn("Girar 90° (R)", func() -> void: stamp_rot = (stamp_rot + 1) % 4))
-	var v := _tab("Mis creaciones")
+	var v := _tab("Casas")
 	cr_filter = OptionButton.new()
 	for t in ["Todas", "Estructuras", "Zonas"]:
 		cr_filter.add_item(t)

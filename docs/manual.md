@@ -5,7 +5,7 @@
 Un mundo **plano y vacío** con una rejilla grande. Dentro hay un **marco** verde que marca el espacio máximo de la creación.
 Construyes dentro del marco; lo que quede fuera no se guarda.
 
-- **Estructura**: tamaño de casa como máximo (límite 32 × 64 × 32 bloques = 16 × 32 × 16 m; la casa más grande del juego mide 22 × 13 y la torre más alta unos 40 de alto).
+- **Estructura**: una casa o torre (límite 96 × 128 × 96 bloques = 48 × 64 × 48 m desde v0.1.3; las casas del catálogo ya vienen ensanchadas: interior ×3 de ancho y fondo, ×2 de alto).
 - **Zona**: sitios grandes (poblado, árbol gigante…). Límite 512 × 320 × 512 bloques = 256 × 160 × 256 m.
   En una zona puedes **estampar** estructuras de tu catálogo y seguir construyendo encima.
 
