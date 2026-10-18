@@ -2,6 +2,7 @@
 
 ## v0.1.3
 - Las 24 casas del catálogo se **agrandaron ×2** (interior, techo, muebles, puertas y ventanas), con los muros exteriores e interiores de 1 bloque de grosor. Se hizo con `tools/escalar.py` (duplica las rebanadas de bloques que no son muro ni suelo). Se quitaron los pilotes y el aire bajo las casas: ahora se apoyan en el suelo.
+- Subir y bajar lo elegido: teclas . (sube) y , (baja) además de RePág/AvPág, y botones «Subir» y «Bajar» en los paneles Mover y Seleccionar.
 - Límite del marco de una estructura: 96×128×96 (antes 32×64×32).
 - Las variantes en ruinas del juego (casa_2_plantas_1, edificio_medieval_2, salon_2_plantas_1/3…) ya venían incompletas del generador.
 

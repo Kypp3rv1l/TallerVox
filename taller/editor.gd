@@ -32,7 +32,7 @@ const TOOL_HELP := [
 	"Clic izq: elegir la estructura bajo el cursor (se resalta) · Los ajustes están en la pestaña Estructura.",
 	"Pega lo copiado con la herramienta Caja · Clic izq: pegar · Mayús+clic: pegar también el aire · R: girar.",
 	"Muestra qué hay bajo el cursor · Clic izq: copiar las coordenadas al portapapeles.",
-	"Clic izq: elegir un detalle, objeto o bloque (Mayús+clic en otro bloque: ampliar la región) · Flechas: mover (relativo a la cámara) · RePág/AvPág: subir/bajar · Mayús+flecha: extender · Ctrl+flecha: achicar · V: paso · X: descomponer · R: girar · Supr: borrar · Esc: soltar.",
+	"Clic izq: elegir un detalle, objeto o bloque (Mayús+clic en otro bloque: ampliar la región) · Flechas: mover (relativo a la cámara) · RePág/AvPág (o . y ,): subir/bajar · Mayús+flecha: extender · Ctrl+flecha: achicar · V: paso · X: descomponer · R: girar · Supr: borrar · Esc: soltar.",
 	"Estampa una creación de «Mis creaciones» dentro del marco · Clic izq: poner · R o rueda: girar · Flechas: mover la sombra · Inicio: reiniciar. Rojo = no cabe.",
 	"SELECCIONAR cosas de una casa: clic izq en un mueble = elige el objeto completo (todas sus cajas pequeñas conectadas) · Mayús+clic: sumar más · modo «Caja»: dos clics en esquinas y elige todo lo que quede dentro · Flechas: mover · R: girar · Supr: borrar · V: paso · Esc: soltar.",
 ]
@@ -464,6 +464,7 @@ func _build_tab_tools() -> void:
 	mr.add_child(_btn("Borrar (Supr)", func() -> void: _delete_sel()))
 	mr.add_child(_btn("Soltar (Esc)", func() -> void: sel = {}))
 	o9.add_child(mr)
+	o9.add_child(_move_pad())
 	o9.add_child(_lbl("Flechas: mover según hacia dónde miras · RePág/AvPág: subir/bajar · Mayús+flecha: extender esa cara · Ctrl+flecha: achicar esa cara · R: girar objetos. Con algo elegido la cámara no gira con las flechas.", 12, UI.DIM, 370.0))
 
 	var o11: VBoxContainer = tool_opts[T_SELECT]
@@ -491,7 +492,23 @@ func _build_tab_tools() -> void:
 	mr2.add_child(_btn("Borrar (Supr)", func() -> void: _delete_sel()))
 	mr2.add_child(_btn("Soltar (Esc)", func() -> void: sel = {}))
 	o11.add_child(mr2)
-	o11.add_child(_lbl("Mayús+clic suma al grupo. Flechas mueven según hacia dónde miras, RePág/AvPág suben/bajan. Con el paso 1/2 o 1/8 solo se mueven las cajas pequeñas (los objetos del catálogo necesitan paso 1 bloque).", 12, UI.DIM, 370.0))
+	o11.add_child(_move_pad())
+	o11.add_child(_lbl("Mayús+clic suma al grupo. Flechas mueven según hacia dónde miras, RePág/AvPág (o las teclas . y ,) suben y bajan. Con el paso 1/2 o 1/8 solo se mueven las cajas pequeñas (los objetos del catálogo necesitan paso 1 bloque).", 12, UI.DIM, 370.0))
+
+
+# botones para mover lo elegido (sirven si el teclado no tiene RePág/AvPág)
+func _move_pad() -> HBoxContainer:
+	var r := HBoxContainer.new()
+	r.add_child(_btn("Subir (.)", func() -> void: _pad_move(KEY_PAGEUP)))
+	r.add_child(_btn("Bajar (,)", func() -> void: _pad_move(KEY_PAGEDOWN)))
+	return r
+
+
+func _pad_move(k: int) -> void:
+	if sel.is_empty():
+		_say("Elige algo primero.", 2.0)
+		return
+	_sel_key(k, false, false)
 
 
 func _build_tab_blocks() -> void:
@@ -1359,6 +1376,8 @@ func _input(e: InputEvent) -> void:
 	if not (e is InputEventKey) or not e.pressed:
 		return
 	var k: int = e.physical_keycode
+	if (k == KEY_PERIOD or k == KEY_COMMA) and has_selection() and not _focus_typing():
+		k = KEY_PAGEUP if k == KEY_PERIOD else KEY_PAGEDOWN   # teclado sin RePag/AvPag: . sube, , baja
 	if k != KEY_LEFT and k != KEY_RIGHT and k != KEY_UP and k != KEY_DOWN and k != KEY_PAGEUP and k != KEY_PAGEDOWN and k != KEY_HOME:
 		return
 	if _focus_typing():

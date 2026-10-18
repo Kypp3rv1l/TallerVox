@@ -102,6 +102,12 @@ func _ready() -> void:
 	_chk(is_equal_approx(bb0.x, bb1.z) and is_equal_approx(bb0.z, bb1.x) and ed.sel["fines"].size() == 3, "seleccionar: girar intercambia ancho y fondo")
 	ed._group_move(Vector3i(0, -1, 0))
 	_chk(Vector3(ed.sel["mn"]).y >= 200.0, "seleccionar: no baja del suelo")
+	var y0: float = Vector3(ed.sel["mn"]).y
+	ed.step_i = 0
+	ed._pad_move(KEY_PAGEUP)
+	_chk(is_equal_approx(Vector3(ed.sel["mn"]).y, y0 + 1.0), "seleccionar: botón Subir sube 1 bloque")
+	ed._pad_move(KEY_PAGEDOWN)
+	_chk(is_equal_approx(Vector3(ed.sel["mn"]).y, y0), "seleccionar: botón Bajar baja 1 bloque")
 	var g2: Dictionary = ed._gr_in_box(Vector3(0, 200, 0), Vector3(8, 205, 8))
 	_chk(g2["fines"].size() == 3 and g2["placed"].is_empty(), "seleccionar: caja elige lo de dentro")
 	ed._delete_sel()
