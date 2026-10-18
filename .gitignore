@@ -1,0 +1,6 @@
+salida/
+taller/build/
+taller/.godot/
+bats/godot_ruta.bat
+taller/bin/*.so
+*.tmp
