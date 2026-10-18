@@ -30,7 +30,7 @@ Los límites están en `taller/editor.gd` (`LIM_STRUCT`, `LIM_ZONE`); se cambian
 
 ## Herramientas (teclas 1-9, 0 y −)
 
-1 Bloque · 2 Pincel · 3 Caja · 4 Detalles · 5 Voxel fino · 6 Catálogo · 7 (sin uso en el Taller) · 8 Pegar · 9 Inspeccionar · 0 Mover · **−  Estampar**.
+1 Bloque · 2 Pincel · 3 Caja · 4 Detalles · 5 Voxel fino · 6 Catálogo · 7 (sin uso en el Taller) · 8 Pegar · 9 Inspeccionar · 0 Mover · **−  Estampar** · **T Seleccionar**.
 Son las mismas del editor de mundo del juego (ver `docs/editor_mundo.md` de Farlands). Atajos comunes: Ctrl+Z / Ctrl+Y, V (paso 1 · 1/2 · 1/8), R girar, Supr borrar, H ayuda.
 
 ## Pestañas del panel
@@ -60,3 +60,16 @@ Son las mismas del editor de mundo del juego (ver `docs/editor_mundo.md` de Farl
 - Aún **no** se integran las creaciones en el generador/semilla (eso viene después).
 - Estampar usa el mismo editor de cubos: si la estampa es enorme y la cámara está lejos, los trozos no cargados se omiten; acércate a la zona antes de estampar.
 - El marco no impide pintar fuera con el pincel/caja, pero lo de fuera no se guarda.
+
+
+## Seleccionar muebles y objetos (herramienta T)
+
+Los muebles de las casas son muchas cajas pequeñas. Con **Seleccionar** eliges un mueble entero:
+
+- **Objeto completo**: clic en cualquier parte del mueble; se elige todo lo que esté pegado a él.
+- **Una sola pieza pequeña**: clic en una caja; sirve también para extender o achicar esa caja.
+- **Caja**: clic en dos esquinas; elige todo lo pequeño y los objetos del catálogo que queden dentro.
+- **Mayús+clic** suma al grupo. Clic derecho o Esc suelta.
+- **Flechas** mueven (según hacia dónde miras), **RePág/AvPág** suben y bajan, **V** cambia el paso (1, 1/2, 1/8), **R** gira 90°, **Supr** borra, **Ctrl+Z** deshace.
+- Con paso menor que 1 bloque, los objetos del catálogo del grupo no se mueven: usa paso 1.
+- Si un mueble queda unido a otros (muchas cajas juntas), usa «Una sola pieza» o «Caja».

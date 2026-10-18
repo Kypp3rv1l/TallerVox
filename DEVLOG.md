@@ -1,5 +1,11 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.2
+- Nueva herramienta **Seleccionar (T)**: elige muebles y objetos de las casas. Modos: objeto completo (cajas pequeñas conectadas), una sola pieza, o caja de dos clics (todo lo que quede dentro). Mayús+clic suma al grupo. Flechas/RePág/AvPág mueven, R gira, Supr borra, Ctrl+Z deshace.
+- **Mover (0)** ahora también ve las cajas pequeñas y los objetos (antes el rayo solo tocaba bloques).
+- Arreglo: el texto de información de lo elegido daba error de formato.
+- Pruebas: 39 (selección, mover con paso 1/8, girar, borrar, caja, casa real).
+
 ## v0.1.1
 - El catálogo trae 24 casas generadas por el juego (8 tipos × 3 variantes, sin el terreno de debajo), con captura. Se sacaron del juego con la nueva función de núcleo `VoxelWorld.export_clipboard(pos)` y la prueba `--only=export_houses` del repo de Farlands.
 - `dev_thumbs.gd` (`--thumbs`): genera las capturas que falten en el catálogo.

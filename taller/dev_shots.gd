@@ -72,5 +72,25 @@ func _ready() -> void:
 	ed._stamp_click(1)
 	await get_tree().create_timer(1.5).timeout
 	await _shot("6_estampada")
+	# seleccion de un mueble en una casa del juego
+	var hp: String = ed.catalog_dir() + "/estructuras/casa_2_plantas_2.json"
+	if FileAccess.file_exists(hp):
+		w.clear_edits()
+		ed.load_doc_text(FileAccess.get_file_as_string(hp))
+		var hf: Array = ed._all_fines()
+		var best: Dictionary = hf[0]
+		for f in hf:
+			if Vector3(f["mn"]).y < Vector3(best["mn"]).y + 0.1 and Vector3(f["mn"]).y > 200.0:
+				best = f
+		ed.set_tool(ed.T_SELECT)
+		ed._group_set(ed._gr_cluster(int(best["id"])), [], false)
+		var c: Vector3 = (Vector3(ed.sel["mn"]) + Vector3(ed.sel["mx"])) * 0.5
+		ed.cam.global_position = (c + Vector3(0, 6, 9)) * ed.BS
+		ed.yaw = 0.0
+		ed.pitch = -0.5
+		ed.tabs.current_tab = 0
+		ed._set_captured(false)
+		await get_tree().create_timer(1.5).timeout
+		await _shot("7_seleccion")
 	print("SHOTS LISTOS en ", out)
 	get_tree().quit()
