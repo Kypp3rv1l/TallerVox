@@ -18,9 +18,10 @@ const T_PASTE := 7
 const T_INSPECT := 8
 const T_MOVE := 9
 const T_STAMP := 10
+const T_SELECT := 11
 const STEPS := [1.0, 0.5, 0.125]
 const STEP_NAMES := ["1 bloque", "1/2 bloque", "1/8 de bloque"]
-const TOOLS := ["Bloque", "Pincel", "Caja", "Detalles", "Voxel fino", "Catálogo", "Estructura", "Pegar", "Inspeccionar", "Mover (0)", "Estampar (−)"]
+const TOOLS := ["Bloque", "Pincel", "Caja", "Detalles", "Voxel fino", "Catálogo", "Estructura", "Pegar", "Inspeccionar", "Mover (0)", "Estampar (−)", "Seleccionar (T)"]
 const TOOL_HELP := [
 	"Clic izq: quitar el bloque apuntado · Clic der: poner el bloque actual junto a la cara apuntada · Rueda: cambiar de bloque · Clic central: copiar el bloque apuntado.",
 	"Clic izq: excavar (o pintar) · Clic der: rellenar (o deshacer lo editado) · Rueda: tamaño del pincel.",
@@ -33,6 +34,7 @@ const TOOL_HELP := [
 	"Muestra qué hay bajo el cursor · Clic izq: copiar las coordenadas al portapapeles.",
 	"Clic izq: elegir un detalle, objeto o bloque (Mayús+clic en otro bloque: ampliar la región) · Flechas: mover (relativo a la cámara) · RePág/AvPág: subir/bajar · Mayús+flecha: extender · Ctrl+flecha: achicar · V: paso · X: descomponer · R: girar · Supr: borrar · Esc: soltar.",
 	"Estampa una creación de «Mis creaciones» dentro del marco · Clic izq: poner · R o rueda: girar · Flechas: mover la sombra · Inicio: reiniciar. Rojo = no cabe.",
+	"SELECCIONAR cosas de una casa: clic izq en un mueble = elige el objeto completo (todas sus cajas pequeñas conectadas) · Mayús+clic: sumar más · modo «Caja»: dos clics en esquinas y elige todo lo que quede dentro · Flechas: mover · R: girar · Supr: borrar · V: paso · Esc: soltar.",
 ]
 const BOX_ACTIONS := ["Rellenar con el bloque actual", "Vaciar (quitar bloques)", "Reemplazar el bloque de la esquina A por el actual", "Volver a lo generado (quitar mis ediciones)",
 	"Borrar detalles y objetos (ventanas, muebles…)", "Restaurar detalles borrados", "Copiar la región", "Rellenar solo el aire", "Pintar solo los bloques sólidos", "Seleccionar para mover / extender"]
@@ -130,6 +132,11 @@ var msg_label: Label
 var cross: Control
 var tool_buttons: Array = []
 var tool_opts: Array = []
+var sel_label2: Label
+var step_btn2: OptionButton
+var select_mode := 0
+var sel_a_set := false
+var sel_a := Vector3i.ZERO
 var block_label: Label
 var block_grid: GridContainer
 var cat_list: ItemList
@@ -458,6 +465,33 @@ func _build_tab_tools() -> void:
 	o9.add_child(mr)
 	o9.add_child(_lbl("Flechas: mover según hacia dónde miras · RePág/AvPág: subir/bajar · Mayús+flecha: extender esa cara · Ctrl+flecha: achicar esa cara · R: girar objetos. Con algo elegido la cámara no gira con las flechas.", 12, UI.DIM, 370.0))
 
+	var o11: VBoxContainer = tool_opts[T_SELECT]
+	o11.add_child(_lbl("Elegir:", 13))
+	var mode_btn := OptionButton.new()
+	mode_btn.add_item("Objeto completo (cajas pequeñas conectadas)")
+	mode_btn.add_item("Una sola pieza pequeña")
+	mode_btn.add_item("Caja: todo lo que quede dentro (2 clics)")
+	mode_btn.item_selected.connect(func(i: int) -> void:
+		select_mode = i
+		sel_a_set = false)
+	o11.add_child(mode_btn)
+	sel_label2 = _lbl("Nada elegido. Clic en un mueble, objeto o bloque.", 13, UI.ACCENT, 370.0)
+	o11.add_child(sel_label2)
+	var sr2 := HBoxContainer.new()
+	sr2.add_child(_lbl("Paso (V)", 13))
+	step_btn2 = OptionButton.new()
+	for t2 in STEP_NAMES:
+		step_btn2.add_item(t2)
+	step_btn2.item_selected.connect(func(i: int) -> void: step_i = i)
+	sr2.add_child(step_btn2)
+	o11.add_child(sr2)
+	var mr2 := HBoxContainer.new()
+	mr2.add_child(_btn("Girar (R)", func() -> void: _sel_rotate()))
+	mr2.add_child(_btn("Borrar (Supr)", func() -> void: _delete_sel()))
+	mr2.add_child(_btn("Soltar (Esc)", func() -> void: sel = {}))
+	o11.add_child(mr2)
+	o11.add_child(_lbl("Mayús+clic suma al grupo. Flechas mueven según hacia dónde miras, RePág/AvPág suben/bajan. Con el paso 1/2 o 1/8 solo se mueven las cajas pequeñas (los objetos del catálogo necesitan paso 1 bloque).", 12, UI.DIM, 370.0))
+
 
 func _build_tab_blocks() -> void:
 	var v := _tab("Bloques")
@@ -578,8 +612,9 @@ func set_tool(t: int) -> void:
 	_end_txn()
 	tool = t
 	has_a = false
-	if t != T_MOVE:
+	if t != T_MOVE and t != T_SELECT:
 		sel = {}
+	sel_a_set = false
 	for i in range(tool_buttons.size()):
 		tool_buttons[i].button_pressed = i == t
 		tool_opts[i].visible = i == t
@@ -758,6 +793,8 @@ func _ray_flags() -> int:
 			f |= 4
 		T_CAT:
 			f |= 12
+		T_MOVE, T_SELECT:
+			f |= 12
 	return f
 
 
@@ -858,7 +895,9 @@ func _unhandled_input(e: InputEvent) -> void:
 				help_on = not help_on
 				help_label.text = TOOL_HELP[tool] if help_on else ""
 			KEY_R:
-				if sel.get("type", "") == "placed":
+				if sel.get("type", "") == "group":
+					_sel_rotate()
+				elif sel.get("type", "") == "placed":
 					_placed_move(Vector3i.ZERO, 1)
 				elif tool == T_PASTE:
 					paste_rot = (paste_rot + 1) % 4
@@ -883,7 +922,12 @@ func _unhandled_input(e: InputEvent) -> void:
 				step_i = (step_i + 1) % STEPS.size()
 				if step_btn:
 					step_btn.selected = step_i
+				if step_btn2:
+					step_btn2.selected = step_i
 				_say("Paso: " + STEP_NAMES[step_i], 2.0)
+			KEY_T:
+				if not ctrl:
+					set_tool(T_SELECT)
 			KEY_X:
 				_decompose()
 			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
@@ -961,6 +1005,8 @@ func _action_down(b: int) -> void:
 			_inspect_click()
 		T_MOVE:
 			_move_click(b)
+		T_SELECT:
+			_select_click(b)
 		T_STAMP:
 			_stamp_click(b)
 
@@ -1365,6 +1411,11 @@ func _sel_key(k: int, shift: bool, ctrl: bool) -> void:
 				_placed_move(d, 0)
 		"region":
 			_region_apply(d, mode)
+		"group":
+			if mode != 0:
+				_say("Un grupo solo se mueve y se gira. Para cambiar el tamaño de una pieza usa la opción «Una sola pieza».", 5.0)
+			else:
+				_group_move(d)
 
 
 func _move_click(b: int) -> void:
@@ -1555,6 +1606,14 @@ func _delete_sel() -> void:
 			world.edit_erase_pick({"hit": true, "kind": "abox", "bmin": Vector3.ZERO, "bmax": Vector3.ONE, "placed_id": int(sel["id"]), "fine_id": 0})
 			_flush()
 			_end_txn()
+		"group":
+			_begin_txn()
+			for f in sel["fines"]:
+				_gr_erase_fine(f)
+			for pid2 in sel["placed"]:
+				world.edit_erase_pick({"hit": true, "kind": "abox", "bmin": Vector3.ZERO, "bmax": Vector3.ONE, "placed_id": int(pid2), "fine_id": 0})
+			_flush()
+			_end_txn()
 		"region":
 			var mn: Vector3i = sel["mn"]
 			var mx: Vector3i = sel["mx"]
@@ -1567,10 +1626,273 @@ func _delete_sel() -> void:
 	_say("Borrado (Ctrl+Z para deshacer)", 3.0)
 
 
+# ---------------------------------------------------------------------------------------------
+# Seleccionar: grupos de cajas pequeñas y objetos (muebles de las casas)
+# ---------------------------------------------------------------------------------------------
+
+func _all_fines() -> Array:
+	var out: Array = []
+	var ed: Variant = JSON.parse_string(world.export_edits(main.GAME_VERSION))
+	if not (ed is Dictionary):
+		return out
+	for f in ed.get("fine", []):
+		out.append(_fine_dict(f))
+	return out
+
+
+func _fine_dict(f: Array) -> Dictionary:
+	return {"id": int(f[0]), "mn": Vector3(float(f[1]), float(f[2]), float(f[3])), "mx": Vector3(float(f[4]), float(f[5]), float(f[6])),
+		"col": Vector3i(int(f[7]), int(f[8]), int(f[9])), "pat": int(f[10]), "glow": bool(f[11])}
+
+
+func _all_placed() -> Array:
+	var out: Array = []
+	var ed: Variant = JSON.parse_string(world.export_edits(main.GAME_VERSION))
+	if not (ed is Dictionary):
+		return out
+	for p in ed.get("placed", []):
+		out.append(int(p[0]))
+	return out
+
+
+func _gr_touch(a: Dictionary, b: Dictionary) -> bool:
+	var e := 0.02
+	var amn: Vector3 = a["mn"]
+	var amx: Vector3 = a["mx"]
+	var bmn: Vector3 = b["mn"]
+	var bmx: Vector3 = b["mx"]
+	return amn.x <= bmx.x + e and bmn.x <= amx.x + e and amn.y <= bmx.y + e and bmn.y <= amx.y + e and amn.z <= bmx.z + e and bmn.z <= amx.z + e
+
+
+func _gr_cluster(fid: int) -> Array:
+	var all := _all_fines()
+	var start := -1
+	for i in range(all.size()):
+		if int(all[i]["id"]) == fid:
+			start = i
+			break
+	if start < 0:
+		return []
+	var res: Array = [all[start]]
+	var rest: Array = []
+	for i in range(all.size()):
+		if i != start:
+			rest.append(all[i])
+	var qi := 0
+	while qi < res.size():
+		var cur: Dictionary = res[qi]
+		qi += 1
+		var keep: Array = []
+		for o in rest:
+			if _gr_touch(cur, o):
+				res.append(o)
+			else:
+				keep.append(o)
+		rest = keep
+	return res
+
+
+func _gr_in_box(mn: Vector3, mx: Vector3) -> Dictionary:
+	var fl: Array = []
+	for f in _all_fines():
+		var c: Vector3 = (Vector3(f["mn"]) + Vector3(f["mx"])) * 0.5
+		if c.x >= mn.x and c.x <= mx.x and c.y >= mn.y and c.y <= mx.y and c.z >= mn.z and c.z <= mx.z:
+			fl.append(f)
+	var pl: Array = []
+	for id in _all_placed():
+		var p: Dictionary = world.edit_get_placed(id)
+		if p.is_empty():
+			continue
+		var pos: Vector3 = p["pos"]
+		var c2: Vector3 = pos + Vector3(p["w"], p["h"], p["d"]) * 0.5
+		if c2.x >= mn.x and c2.x <= mx.x and c2.y >= mn.y and c2.y <= mx.y and c2.z >= mn.z and c2.z <= mx.z:
+			pl.append(id)
+	return {"fines": fl, "placed": pl}
+
+
+func _group_set(fl: Array, pl: Array, add: bool) -> void:
+	if add and sel.get("type", "") == "group":
+		var seen := {}
+		for f in sel["fines"]:
+			seen[int(f["id"])] = true
+		for f in fl:
+			if not seen.has(int(f["id"])):
+				sel["fines"].append(f)
+		for id in pl:
+			if not sel["placed"].has(id):
+				sel["placed"].append(id)
+	else:
+		sel = {"type": "group", "fines": fl, "placed": pl}
+	_group_bounds()
+	if sel["fines"].is_empty() and sel["placed"].is_empty():
+		sel = {}
+
+
+func _group_bounds() -> void:
+	var mn := Vector3(1e9, 1e9, 1e9)
+	var mx := Vector3(-1e9, -1e9, -1e9)
+	for f in sel["fines"]:
+		mn = mn.min(Vector3(f["mn"]))
+		mx = mx.max(Vector3(f["mx"]))
+	for id in sel["placed"]:
+		var p: Dictionary = world.edit_get_placed(int(id))
+		if p.is_empty():
+			continue
+		var pos: Vector3 = p["pos"]
+		mn = mn.min(pos)
+		mx = mx.max(pos + Vector3(p["w"], p["h"], p["d"]))
+	sel["mn"] = mn
+	sel["mx"] = mx
+
+
+func _gr_erase_fine(f: Dictionary) -> void:
+	world.edit_erase_pick({"hit": true, "kind": "abox", "bmin": Vector3(f["mn"]), "bmax": Vector3(f["mx"]), "placed_id": 0, "fine_id": int(f["id"])})
+
+
+func _gr_add_fine(mn: Vector3, mx: Vector3, f: Dictionary) -> Dictionary:
+	var c: Vector3i = f["col"]
+	var id: int = world.edit_add_fine(mn, mx, c.x, c.y, c.z, int(f["pat"]), bool(f["glow"]))
+	return {"id": id, "mn": mn, "mx": mx, "col": c, "pat": f["pat"], "glow": f["glow"]}
+
+
+func _select_click(b: int) -> void:
+	if b == 2:
+		sel = {}
+		sel_a_set = false
+		return
+	if not _hit_ok():
+		return
+	var add := Input.is_physical_key_pressed(KEY_SHIFT)
+	var k: String = hit["kind"]
+	if select_mode == 2:
+		var c: Vector3i = hit["cell"]
+		if not sel_a_set:
+			sel_a = c
+			sel_a_set = true
+			_say("Esquina A lista: ahora apunta a la esquina B y haz clic.", 5.0)
+			return
+		sel_a_set = false
+		var mn := Vector3(mini(sel_a.x, c.x), mini(sel_a.y, c.y), mini(sel_a.z, c.z))
+		var mx := Vector3(maxi(sel_a.x, c.x) + 1, maxi(sel_a.y, c.y) + 1, maxi(sel_a.z, c.z) + 1)
+		var g := _gr_in_box(mn, mx)
+		_group_set(g["fines"], g["placed"], add)
+		if sel.is_empty():
+			_say("No hay cajas pequeñas ni objetos dentro de esa caja.", 4.0)
+		return
+	if k == "block":
+		var c2: Vector3i = hit["cell"]
+		if add and sel.get("type", "") == "region":
+			var a: Vector3i = sel["mn"]
+			var z: Vector3i = sel["mx"]
+			sel = {"type": "region", "mn": Vector3i(mini(a.x, c2.x), mini(a.y, c2.y), mini(a.z, c2.z)), "mx": Vector3i(maxi(z.x, c2.x), maxi(z.y, c2.y), maxi(z.z, c2.z))}
+		else:
+			sel = {"type": "region", "mn": c2, "mx": c2}
+		return
+	var pid := int(hit.get("placed_id", 0))
+	if pid <= 0 and k != "abox":
+		_begin_txn()
+		pid = world.edit_adopt_deco(hit)
+		_flush()
+		_end_txn()
+		if pid <= 0:
+			_say("Ese detalle no se puede elegir. Bórralo y ponlo desde el Catálogo.", 5.0)
+			return
+	if pid > 0:
+		_group_set([], [pid], add)
+		return
+	var fid := int(hit["fine_id"])
+	if select_mode == 1:
+		var one := {"id": fid, "mn": Vector3(hit["bmin"]), "mx": Vector3(hit["bmax"]), "col": Vector3i(hit["color"]), "pat": int(hit["pat"]), "glow": bool(hit["glow"])}
+		_group_set([one], [], add)
+	else:
+		var cl := _gr_cluster(fid)
+		if cl.is_empty():
+			cl = [{"id": fid, "mn": Vector3(hit["bmin"]), "mx": Vector3(hit["bmax"]), "col": Vector3i(hit["color"]), "pat": int(hit["pat"]), "glow": bool(hit["glow"])}]
+		_group_set(cl, [], add)
+
+
+func _group_move(d: Vector3i) -> void:
+	var s: float = STEPS[step_i]
+	var dv := Vector3(d) * s
+	if not sel["placed"].is_empty() and s < 1.0:
+		_say("Hay objetos del catálogo en el grupo: pon el paso en 1 bloque (V).", 4.0)
+		return
+	var nmn: Vector3 = Vector3(sel["mn"]) + dv
+	if nmn.y < float(_fmin().y) - 0.001:
+		_say("No se puede bajar del suelo.", 2.0)
+		return
+	_begin_txn()
+	for f in sel["fines"]:
+		_gr_erase_fine(f)
+	var nf: Array = []
+	for f in sel["fines"]:
+		nf.append(_gr_add_fine(Vector3(f["mn"]) + dv, Vector3(f["mx"]) + dv, f))
+	var np: Array = []
+	for id in sel["placed"]:
+		var p: Dictionary = world.edit_get_placed(int(id))
+		if p.is_empty():
+			continue
+		var nid: int = world.edit_move_placed(int(id), Vector3(p["pos"]) + dv, int(p["rot"]))
+		if nid > 0:
+			np.append(nid)
+	_flush()
+	_end_txn()
+	sel["fines"] = nf
+	sel["placed"] = np
+	_group_bounds()
+
+
+func _sel_rotate() -> void:
+	match String(sel.get("type", "")):
+		"placed":
+			_placed_move(Vector3i.ZERO, 1)
+		"group":
+			_group_rotate()
+		_:
+			_say("Elige un grupo u objeto para girarlo.", 3.0)
+
+
+func _group_rotate() -> void:
+	var c: Vector3 = (Vector3(sel["mn"]) + Vector3(sel["mx"])) * 0.5
+	var cx := roundf(c.x)
+	var cz := roundf(c.z)
+	_begin_txn()
+	for f in sel["fines"]:
+		_gr_erase_fine(f)
+	var nf: Array = []
+	for f in sel["fines"]:
+		var a: Vector3 = f["mn"]
+		var b: Vector3 = f["mx"]
+		var n0 := Vector3(cx - (b.z - cz), a.y, cz + (a.x - cx))
+		var n1 := Vector3(cx - (a.z - cz), b.y, cz + (b.x - cx))
+		nf.append(_gr_add_fine(n0, n1, f))
+	var np: Array = []
+	for id in sel["placed"]:
+		var p: Dictionary = world.edit_get_placed(int(id))
+		if p.is_empty():
+			continue
+		var pos: Vector3 = p["pos"]
+		var npos := Vector3(cx - (pos.z + float(p["d"]) - cz), pos.y, cz + (pos.x - cx))
+		var nid: int = world.edit_move_placed(int(id), npos, (int(p["rot"]) + 1) % 4)
+		if nid > 0:
+			np.append(nid)
+	_flush()
+	_end_txn()
+	sel["fines"] = nf
+	sel["placed"] = np
+	_group_bounds()
+
+
+func _n(v: float) -> String:
+	return String.num(v, 3)
+
+
 func _draw_sel() -> void:
 	if sel.is_empty():
 		if sel_label and tool == T_MOVE:
 			sel_label.text = "Nada elegido. Clic en un detalle, objeto o bloque."
+		if sel_label2 and tool == T_SELECT:
+			sel_label2.text = "Nada elegido. Clic en un mueble, objeto o bloque."
 		return
 	var txt := ""
 	match String(sel["type"]):
@@ -1579,7 +1901,7 @@ func _draw_sel() -> void:
 			var mx: Vector3 = sel["mx"]
 			_box(mn - Vector3(0.01, 0.01, 0.01), mx + Vector3(0.01, 0.01, 0.01), Color(1, 0.3, 0.9), true, 0.22)
 			var z := mx - mn
-			txt = "Detalle %.3g x %.3g x %.3g bloques · en (%.3g, %.3g, %.3g)" % [z.x, z.y, z.z, mn.x, mn.y, mn.z]
+			txt = "Detalle %s x %s x %s bloques · en (%s, %s, %s)" % [_n(z.x), _n(z.y), _n(z.z), _n(mn.x), _n(mn.y), _n(mn.z)]
 		"placed":
 			var p: Dictionary = world.edit_get_placed(int(sel["id"]))
 			if p.is_empty():
@@ -1588,7 +1910,17 @@ func _draw_sel() -> void:
 			var pos: Vector3 = p["pos"]
 			_box(pos, pos + Vector3(p["w"], p["h"], p["d"]), Color(1, 0.3, 0.9), true, 0.2)
 			var nm: String = cat_items.get(int(p["cat"]), {}).get("name", "objeto")
-			txt = "Objeto: %s · en (%.3g, %.3g, %.3g) · giro %d" % [nm, pos.x, pos.y, pos.z, int(p["rot"])]
+			txt = "Objeto: %s · en (%s, %s, %s) · giro %d" % [nm, _n(pos.x), _n(pos.y), _n(pos.z), int(p["rot"])]
+		"group":
+			var gmn: Vector3 = sel["mn"]
+			var gmx: Vector3 = sel["mx"]
+			var fl: Array = sel["fines"]
+			if fl.size() <= 250:
+				for f in fl:
+					_box(Vector3(f["mn"]) - Vector3(0.005, 0.005, 0.005), Vector3(f["mx"]) + Vector3(0.005, 0.005, 0.005), Color(1, 0.3, 0.9), true, 0.25)
+			_box(gmn - Vector3(0.03, 0.03, 0.03), gmx + Vector3(0.03, 0.03, 0.03), Color(1, 0.8, 0.2))
+			var gz := gmx - gmn
+			txt = "Grupo: %d cajas pequeñas + %d objetos · %s x %s x %s bloques · en (%s, %s, %s)" % [fl.size(), sel["placed"].size(), _n(gz.x), _n(gz.y), _n(gz.z), _n(gmn.x), _n(gmn.y), _n(gmn.z)]
 		"region":
 			var a: Vector3i = sel["mn"]
 			var b: Vector3i = sel["mx"]
@@ -1596,6 +1928,8 @@ func _draw_sel() -> void:
 			txt = "Región %d x %d x %d bloques · desde (%d, %d, %d)" % [b.x - a.x + 1, b.y - a.y + 1, b.z - a.z + 1, a.x, a.y, a.z]
 	if sel_label:
 		sel_label.text = txt + "\nPaso: " + STEP_NAMES[step_i]
+	if sel_label2:
+		sel_label2.text = txt + "\nPaso: " + STEP_NAMES[step_i]
 
 
 
@@ -1735,6 +2069,13 @@ func _draw_tool() -> void:
 			_box(bmin - Vector3(0.01, 0.01, 0.01), bmax + Vector3(0.01, 0.01, 0.01), Color(1, 1, 1))
 		T_MOVE:
 			_box(bmin - Vector3(0.01, 0.01, 0.01), bmax + Vector3(0.01, 0.01, 0.01), Color(1, 1, 0.4))
+		T_SELECT:
+			if select_mode == 2 and sel_a_set:
+				var sa := Vector3i(mini(sel_a.x, cell.x), mini(sel_a.y, cell.y), mini(sel_a.z, cell.z))
+				var sb := Vector3i(maxi(sel_a.x, cell.x), maxi(sel_a.y, cell.y), maxi(sel_a.z, cell.z))
+				_box(Vector3(sa) - Vector3(0.01, 0.01, 0.01), Vector3(sb) + Vector3(1.01, 1.01, 1.01), Color(0.3, 1, 0.5), true, 0.14)
+			else:
+				_box(bmin - Vector3(0.01, 0.01, 0.01), bmax + Vector3(0.01, 0.01, 0.01), Color(0.3, 1, 0.8))
 
 
 func _push_box_lines(st: ImmediateMesh, mn: Vector3, mx: Vector3, col: Color) -> void:
