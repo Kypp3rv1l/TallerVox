@@ -1,4 +1,21 @@
-# Reglas de las casas (sacadas de la Taberna v1)
+# Reglas de las casas
+
+## Estilo Cube World (v0.1.5, vigente)
+
+Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el personaje mide 2). Lo arma `tools/cw_casas.py`.
+
+- **Material**: superficies grandes lisas, un color por bloque con leve variación de tono (sin ladrillo). Todo el detalle va en objetos de voxel chico.
+  - muro (186,176,140) · zócalo (98,106,102) · techo (46,86,82) · suelo interior (156,152,138) · entrepiso y techo interior de madera.
+- **Casa**: acera de losas de 2 tonos; la casa queda 2 bloques más alta (zócalo oscuro de 2 que sobresale 1). Muro de 7 de alto por planta; cornisa oscura entre plantas.
+- **Puerta**: hueco de 2×3 **sin hoja** (sistema de abrir y cerrar a futuro), marco de madera oscura, dintel que sobresale, umbral; un escalón de piedra + el zócalo hacen 2 escalones.
+- **Ventanas**: 2×2, alféizar a 2 del suelo, marco y cruz de madera oscura, vidrio azul, repisa por dentro y **jardinera con flores** por fuera. Pocas por cara (1 o 2), simétricas; alineadas entre plantas. Hueco con Colisión invisible (89).
+- **Techo**: a cuatro aguas escalonado (cada piso entra 2 bloques), alero de 1, vigas que asoman bajo el alero en los lados largos; por dentro, tablas con vigas.
+- **Chimenea**: hogar (130) en un nicho de 2×3 metido en el muro; cuerpo de piedra de 2 de fondo que sale por fuera y se angosta a 2×2 sobre el alero. El nicho es cerrado: fondo con hollín, lados y campana de piedra; repisa de madera encima.
+- **Interior**: una sala grande por planta, muebles contra los muros, alfombra grande de borde a dos tonos, farol de pared, plantas en maceta. Escalera recta de madera de 2 de ancho con baranda arriba.
+- **Pueblo**: losas de 2 tonos, farolas negras de 6, bancos, árbol en jardinera elevada con borde de piedra, puestos con toldo a rayas.
+- **Campos**: terrazas de 1 de desnivel y 10 de fondo, tierra lisa con surcos de dos tonos, borde de pasto, camino de piedra; cultivos cada 2 bloques.
+
+## Reglas anteriores (v0.1.4, sacadas de la Taberna v1)
 
 Sacado del modelo `taberna_gremio_1` (hecho por Ivan). `tools/reeditar.py` aplica estas reglas a las casas del catálogo.
 Medidas en bloques (1 bloque = 0,5 m). «Suelo» = primer bloque transitable de la planta (y_local = losa + 1).

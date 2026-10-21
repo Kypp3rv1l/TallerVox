@@ -1,5 +1,13 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.5
+- **Propuestas estilo Cube World** (sacadas del video de Thalmor City), nuevas en el catálogo con prefijo `cw_`: `cw_casa_1_planta`, `cw_casa_2_plantas`, `cw_taberna_gremio` (la Taberna y Gremio rehecha a esa escala), `cw_campo_terrazas` y `cw_plaza_arbol`. Las casas viejas no se tocaron.
+- Escala de Cube World (personaje de 2 bloques): puerta 2×3 sin hoja, ventana 2×2 con cruz y jardinera, 7 de alto por planta, zócalo oscuro, casa 2 bloques sobre la acera con escalones, techo bajo escalonado verde azulado con vigas bajo el alero.
+- **Material liso**: muros, techos, suelos y tierra de cultivo son bloques invisibles sólidos con una caja fina de 1×1×1 por bloque visible (un color por bloque con leve variación de tono, sin dibujo de ladrillo).
+- Chimenea nueva: el hogar queda en un nicho cerrado de piedra (fondo, lados y campana); el humero no se ve desde dentro.
+- Cultivos de voxel chico: calabazas, matas trepadoras, girasoles y coles; espantapájaros, farolas, puestos con toldo y árbol en pisos.
+- Herramientas: `tools/cw_lib.py` (material liso), `tools/cw_casas.py` (casa, ventanas, puerta, chimenea, escalera, mostrador, tablero de misiones…), `tools/cw_propuestas.py` (genera las 5 propuestas).
+
 ## v0.1.4
 - **Taberna y Gremio** (`taberna_gremio_1`, modelo de Ivan) entra al catálogo y es la referencia de estilo: ver `docs/reglas_casas.md`.
 - Las 19 casas genéricas del catálogo se **re-editaron con esas reglas** (`tools/reeditar_todo.py`): ventanas 6×6 con cruz y postigos azules (idénticas por cara, simétricas, alféizar a 1 m), chimenea hueca de 3 de fondo con hogar, mesas redondas / mostrador donde hay espacio. Se saltan las ruinas y la caseta de ejemplo.
