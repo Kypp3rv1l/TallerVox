@@ -4,7 +4,7 @@ extends Node3D
 
 const Look = preload("res://look.gd")
 const TallerEditor := preload("res://editor.gd")
-const VERSION := "0.1.3"
+const VERSION := "0.1.4"
 const GAME_VERSION := "taller-0.1.0"
 const FLAT_Y := 200            # el suelo termina en el bloque 199: lo que se construye empieza en y = 200
 const SEED := 7777
@@ -48,6 +48,10 @@ func _ready() -> void:
 			var sh: Node = load("res://dev_shots.gd").new()
 			sh.set("main", self)
 			add_child(sh)
+		if a.begins_with("--ver="):
+			var vr: Node = load("res://dev_ver.gd").new()
+			vr.set("main", self)
+			add_child(vr)
 		if a == "--thumbs":
 			var th: Node = load("res://dev_thumbs.gd").new()
 			th.set("main", self)

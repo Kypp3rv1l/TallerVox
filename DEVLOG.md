@@ -1,7 +1,14 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.4
+- **Taberna y Gremio** (`taberna_gremio_1`, modelo de Ivan) entra al catálogo y es la referencia de estilo: ver `docs/reglas_casas.md`.
+- Las 19 casas genéricas del catálogo se **re-editaron con esas reglas** (`tools/reeditar_todo.py`): ventanas 6×6 con cruz y postigos azules (idénticas por cara, simétricas, alféizar a 1 m), chimenea hueca de 3 de fondo con hogar, mesas redondas / mostrador donde hay espacio. Se saltan las ruinas y la caseta de ejemplo.
+- `tools/plantillas.json` (ventana y mesa redonda tomadas de la Taberna), `tools/muebles.py`, `tools/geom.py`.
+- `dev_ver.gd` (`--ver=archivo(s).json --out=carpeta --views=auto|nombre:x,y,z,yaw,pitch;…`): capturas de cualquier .json para revisar casas.
+
 ## v0.1.3
 - Las 24 casas del catálogo se **agrandaron ×2** (interior, techo, muebles, puertas y ventanas), con los muros exteriores e interiores de 1 bloque de grosor. Se hizo con `tools/escalar.py` (duplica las rebanadas de bloques que no son muro ni suelo). Se quitaron los pilotes y el aire bajo las casas: ahora se apoyan en el suelo.
+- Nueva herramienta **Caja fina (F)**: dos clics en esquinas con voxeles de 1/8, 1/4, 1/2 o 1 bloque; rellena todo con UNA sola caja (color, brillo y textura de Voxel fino). Opciones: hueca (solo paredes, de 1/8 a 2 bloques de grosor) y «Borrar detalles y cajas finas dentro». Flechas y `.` `,` mueven el punto apuntado; rueda cambia el tamaño.
 - Subir y bajar lo elegido: teclas . (sube) y , (baja) además de RePág/AvPág, y botones «Subir» y «Bajar» en los paneles Mover y Seleccionar.
 - Límite del marco de una estructura: 96×128×96 (antes 32×64×32).
 - Las variantes en ruinas del juego (casa_2_plantas_1, edificio_medieval_2, salon_2_plantas_1/3…) ya venían incompletas del generador.
