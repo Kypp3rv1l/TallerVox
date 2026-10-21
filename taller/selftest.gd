@@ -120,8 +120,35 @@ func _ready() -> void:
 	ed.tool = ed.T_MOVE
 	_chk((ed._ray_flags() & 12) == 12, "rayo: Mover ve cajas pequeñas y objetos")
 	ed.tool = ed.T_BLOCK
+	# --- caja fina
+	w.clear_edits()
+	ed.fine_color = Color8(180, 40, 40)
+	ed.fb_action = 0
+	ed.fb_hollow = false
+	var nb: int = ed.fbox_apply(Vector3(2, 200, 2), Vector3(4.5, 202.125, 3.25))
+	_chk(nb == 1 and ed._all_fines().size() == 1, "caja fina: rellena con una sola caja")
+	var f0: Dictionary = ed._all_fines()[0]
+	_chk(Vector3(f0["mx"]).is_equal_approx(Vector3(4.5, 202.125, 3.25)), "caja fina: medidas finas (1/8)")
+	w.clear_edits()
+	ed.fb_hollow = true
+	ed.fb_wall = 8
+	var parts: Array = ed._fbox_parts(Vector3(0, 200, 0), Vector3(6, 205, 5))
+	var vol := 0.0
+	for q in parts:
+		var dq: Vector3 = Vector3(q[1]) - Vector3(q[0])
+		vol += dq.x * dq.y * dq.z
+	_chk(parts.size() == 6 and is_equal_approx(vol, 6.0 * 5.0 * 5.0 - 4.0 * 3.0 * 3.0), "caja fina: hueca = solo paredes (vol %s)" % str(vol))
+	_chk(ed._fbox_parts(Vector3(0, 200, 0), Vector3(2, 205, 5)).size() == 1, "caja fina: muy delgada queda maciza")
+	ed.fbox_apply(Vector3(0, 200, 0), Vector3(6, 205, 5))
+	_chk(ed._all_fines().size() == 6, "caja fina: hueca crea 6 cajas")
+	ed.fb_action = 1
+	ed.fbox_apply(Vector3(0, 200, 0), Vector3(6, 205, 5))
+	_chk(ed._all_fines().is_empty(), "caja fina: borrar quita las cajas de dentro")
+	ed.fb_action = 0
+	ed.fb_hollow = false
+	w.clear_edits()
 	# --- casa del juego: los muebles se agrupan por objeto
-	var hp: String = ed.catalog_dir() + "/estructuras/casa_2_plantas_2.json"
+	var hp: String = ed.catalog_dir() + "/estructuras/cw_casa_2_plantas.json"
 	if FileAccess.file_exists(hp):
 		w.clear_edits()
 		ed.load_doc_text(FileAccess.get_file_as_string(hp))

@@ -28,6 +28,16 @@ MATS = {
     "acera":    ((196, 194, 184), 6, 0),
     "acera_os": ((172, 170, 160), 6, 0),
     "tronco":   ((112, 80, 50), 6, 0),
+    "pilar":    ((168, 164, 152), 6, 0),
+    "muro_ocre": ((198, 168, 118), 7, 0),
+    "muro_rosa": ((196, 164, 150), 7, 0),
+    "muro_blanco": ((214, 208, 190), 6, 0),
+    "madera_pared": ((136, 92, 58), 6, 2),
+    "techo_morado": ((92, 62, 128), 5, 0),
+    "techo_rojo": ((150, 64, 50), 5, 0),
+    "techo_oscuro": ((70, 64, 72), 5, 0),
+    "piedra_muralla": ((150, 146, 134), 7, 0),
+    "agua":     ((70, 130, 190), 4, 0),
     "hoja":     ((74, 178, 62), 8, 0),
     "hoja_os":  ((52, 146, 52), 7, 0),
 }
@@ -141,7 +151,7 @@ class Obra:
         return n
 
     # ---- salida ----
-    def escribir(self, ruta, taller="0.1.6"):
+    def escribir(self, ruta, taller="0.1.7"):
         for fn in self.finales:
             fn()
         self.finales = []

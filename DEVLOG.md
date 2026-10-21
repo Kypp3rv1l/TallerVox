@@ -1,5 +1,11 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.7
+- **Catálogo nuevo**: se sacaron las casas antiguas (y la Taberna v1 y la caseta de ejemplo); quedan solo las 18 estructuras `cw_`.
+- **12 estructuras nuevas**: `cw_tienda_pociones`, `cw_herreria` (semiabierta, fragua con chimenea, yunque, pila de temple, piedra de afilar), `cw_carpinteria` (semiabierta), `cw_pabellon_entrenamiento` (suelo de laberinto, columnas, muñecos, dianas), `cw_casas_hilera` (3 casas con muro compartido), `cw_posada_balcon` (balcón y escalera exterior), `cw_pozo`, `cw_torre_vigia` (campanario), `cw_granero_establo` (5 boxes, monturas), `cw_muro_porton` (muralla, casa de guardia, rastrillo), `cw_puente_piedra`, `cw_torre_arcana` (encantamientos, biblioteca, observatorio).
+- **Correcciones**: los símbolos de los carteles ya no parpadean (cada pieza va a otra profundidad); los faroles y muebles ya no chocan (la revisión de criterio ahora detecta choques entre objetos y muebles que tapan una ventana por dentro); vuelven los **sillares de esquina**; enredaderas más frondosas (mata al pie, tallos en abanico, racimos de hojas, florcitas y remate que cae a los lados).
+- Herramientas: `Casa.abrir` (lados abiertos con pilares y escalón corrido), `escalera_perimetral` (escalera pegada a los muros para torres), `baranda` genérica, puertas de cualquier alto (portones), cornisa y sillares por cara, nuevos materiales (muros ocre/rosa/blanco/tablas, techos morado/rojo/oscuro, piedra de muralla). Símbolos de cartel nuevos: poción, yunque, sierra, cama, libro.
+
 ## v0.1.6
 Correcciones de la revisión de Ivan a las propuestas `cw_`:
 - **Vigas**: ya no cruzan el hueco de la escalera; se cortan y descansan en brochales alrededor del hueco.

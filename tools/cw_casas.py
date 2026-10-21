@@ -25,7 +25,8 @@ PIEDRA_F = (150, 146, 136)
 # huella (ancho x, fondo z, alto) de los objetos del catalogo con rot = 0
 DIMS = {121: (2, 4, 2), 122: (2, 1, 2), 123: (3, 1, 2), 124: (2, 1, 2), 125: (3, 1, 1), 126: (1, 1, 1), 127: (3, 1, 4),
         128: (1, 1, 2), 129: (1, 1, 1), 130: (2, 2, 1), 131: (1, 1, 2), 133: (2, 1, 3), 135: (2, 1, 1), 155: (3, 1, 2),
-        159: (1, 1, 1), 161: (2, 1, 1)}
+        159: (1, 1, 1), 161: (2, 1, 1), 138: (1, 1, 2)}
+NO_INFLAMABLE_EXTRA = {138}
 NO_INFLAMABLE = {135, 159}
 
 
@@ -61,13 +62,16 @@ def farol(o, cx, y0, cz, s=1.0, pie=True):
 class Casa:
     """Caja de muros de x0..x1, z0..z1 (celdas de muro incluidas) sobre una acera en y=0."""
 
-    def __init__(self, o: Obra, x0, z0, x1, z1, pisos=1, h=H_PISO, techo=True, muro="muro"):
+    def __init__(self, o: Obra, x0, z0, x1, z1, pisos=1, h=H_PISO, techo=True, muro="muro", esquinas=True,
+                 teja="techo", cornisa=True):
         self.o, self.x0, self.z0, self.x1, self.z1, self.pisos, self.h = o, x0, z0, x1, z1, pisos, h
         self.s = 3
         self.suelos = [self.s + k * (h + 1) for k in range(pisos)]
         self.roof_y = self.s + pisos * h + (pisos - 1)
         self.muro = muro
         self.techo_on = techo
+        self.teja = teja
+        self.cornisa = cornisa
         self.caras = {
             "n": {"O": (x0, z0), "U": (1, 0), "N": (0, -1)},
             "s": {"O": (x0, z1 + 1), "U": (1, 0), "N": (0, 1)},
@@ -78,7 +82,10 @@ class Casa:
         self.zonas = []         # (x0, z0, x1, z1, y0, y1, tipo, nombre)
         self.fuegos = []        # (x, z, y, radio)
         self.problemas = []
+        self.objs = []          # (x0, z0, x1, z1, y0, y1, nombre): todo lo colocado, para que nada choque
         self._cuerpo()
+        if esquinas:
+            self._esquinas(esquinas if isinstance(esquinas, (list, tuple, set)) else None)
         if techo:
             self._techo()
         o.finales.append(self.terminar)
@@ -113,11 +120,20 @@ class Casa:
     def reservar(self, x0, z0, x1, z1, y0, y1, tipo, nombre):
         self.zonas.append((x0, z0, x1, z1, y0, y1, tipo, nombre))
 
-    def ocupa(self, nombre, x0, z0, x1, z1, y0, y1, inflamable=True, exterior=False):
-        """Registra un mueble/objeto y revisa que no pise pasos, ventanas ni quede pegado al fuego."""
+    def ocupa(self, nombre, x0, z0, x1, z1, y0, y1, inflamable=True, exterior=False, choca=True):
+        """Registra un mueble/objeto y revisa que no pise pasos, ventanas, otros objetos ni quede pegado al fuego."""
         a = (x0, z0, x1, z1, y0, y1)
+        if choca:
+            e = 0.02
+            b = (x0 + e, z0 + e, x1 - e, z1 - e, y0 + e, y1 - e)
+            for (ox0, oz0, ox1, oz1, oy0, oy1, on) in self.objs:
+                if _solapa(b, (ox0, oz0, ox1, oz1, oy0, oy1)):
+                    self.problemas.append("%s choca con %s" % (nombre, on))
+            self.objs.append((x0, z0, x1, z1, y0, y1, nombre))
         for (zx0, zz0, zx1, zz1, zy0, zy1, tipo, zn) in self.zonas:
             if tipo == "ventana" and not exterior:
+                continue
+            if tipo == "ventana_in" and exterior:
                 continue
             if _solapa(a, (zx0, zz0, zx1, zz1, zy0, zy1)):
                 self.problemas.append("%s pisa %s (%s)" % (nombre, zn, tipo))
@@ -156,9 +172,12 @@ class Casa:
         for k in range(1, self.pisos):
             y = self.suelos[k] - 1
             o.mbox(x0 + 1, y, z0 + 1, x1 - 1, y, z1 - 1, "madera")
-            for cn, c in self.caras.items():
-                L = self.largo(cn)
-                o.fc(c, -0.3, y + 0.55, 0, L + 0.3, y + 1.0, 0.3, (92, 98, 96))
+            if self.cornisa:
+                for cn, c in self.caras.items():
+                    if isinstance(self.cornisa, (list, tuple, set)) and cn not in self.cornisa:
+                        continue
+                    L = self.largo(cn)
+                    o.fc(c, -0.34, y + 0.55, 0, L + 0.34, y + 1.0, 0.3, (92, 98, 96))
 
     def _techo(self):
         o, x0, z0, x1, z1, y = self.o, self.x0, self.z0, self.x1, self.z1, self.roof_y
@@ -171,9 +190,9 @@ class Casa:
                 for xx in range(a0, a1 + 1):
                     for zz in range(b0, b1 + 1):
                         inside = x0 < xx < x1 and z0 < zz < z1
-                        o.mat(xx, y, zz, "madera" if inside else "techo")
+                        o.mat(xx, y, zz, "madera" if inside else self.teja)
             else:
-                o.mbox(a0, y + k, b0, a1, y + k, b1, "techo")
+                o.mbox(a0, y + k, b0, a1, y + k, b1, self.teja)
             k += 1
         self.cumbre = y + k - 1
         largos = ("n", "s") if (x1 - x0) >= (z1 - z0) else ("o", "e")
@@ -181,6 +200,60 @@ class Casa:
             c = self.caras[cn]
             for u in range(2, self.largo(cn) - 1, 3):
                 o.fc(c, u + 0.25, y - 0.45, -0.2, u + 0.75, y, 0.85, WDD, 2)
+
+    def _esquinas(self, cuales=None):
+        """Sillares de esquina (como las casas anteriores): bloques de piedra clara que sobresalen 0,08 y se traban,
+        una hilada larga en una cara y corta en la otra, alternando. Separados por una junta fina."""
+        o = self.o
+        top = self.roof_y - 1
+        esq = [("n", "o", 0, 0), ("n", "e", self.largo("n"), 0), ("s", "o", 0, self.largo("o")), ("s", "e", self.largo("s"), self.largo("e"))]
+        for y in range(3, top + 1):
+            if any(abs(y - (sl - 1)) < 0.5 for sl in self.suelos[1:]) and self.cornisa:
+                continue
+            par = y % 2
+            k = _h(self.x0, self.z0, y) % 1000 / 1000.0
+            col = (int(198 + 10 * k), int(194 + 10 * k), int(182 + 8 * k))
+            for (ca, cb, ua, ub) in esq:
+                if cuales is not None and (ca + cb) not in cuales:
+                    continue
+                la, lb = (2.0, 1.15) if par else (1.15, 2.0)
+                A, B = self.caras[ca], self.caras[cb]
+                # cara a: desde la esquina hacia adentro
+                if ua == 0:
+                    o.fc(A, -0.08, y + 0.03, -0.0, la, y + 0.97, 0.08, col)
+                else:
+                    o.fc(A, ua - la, y + 0.03, -0.0, ua + 0.08, y + 0.97, 0.08, col)
+                if ub == 0:
+                    o.fc(B, 0.0, y + 0.03, -0.0, lb, y + 0.97, 0.08, col)
+                else:
+                    o.fc(B, ub - lb, y + 0.03, -0.0, ub, y + 0.97, 0.08, col)
+
+    def abrir(self, cara, u0, u1, piso=0, cada=4, viga=True):
+        """Abre el muro de la cara entre u0 y u1 (celdas u0..u1-1) en la planta 'piso': quedan pilares de piedra
+        cada 'cada' bloques y una viga de madera arriba. Para talleres semiabiertos (herreria, carpinteria)."""
+        o, c = self.o, self.caras[cara]
+        y0 = self.suelos[piso]
+        y1 = (self.suelos[piso + 1] - 2) if piso + 1 < self.pisos else self.roof_y - 1
+        for u in range(u0, u1):
+            for y in range(y0, y1 + 1):
+                o.clear(*self.celda(cara, u, y))
+        us = list(range(u0, u1, cada))
+        if us[-1] != u1 - 1:
+            us.append(u1 - 1)
+        for u in us:
+            for y in range(y0, y1 + 1):
+                x, yy, z = self.celda(cara, u, y)
+                o.mat(x, yy, z, "pilar")
+        if viga:
+            o.fc(c, u0 - 0.2, y1 + 0.55, -1.15, u1 + 0.2, y1 + 1.0, 0.15, WDD, 2)
+        x0, z0, x1, z1 = self.rect(cara, u0, -1, u1, 0)
+        self.reservar(x0, z0, x1, z1, y0, y1, "paso", "lado abierto %s" % cara)
+        if piso == 0:       # escalon de piedra corrido delante del lado abierto (el zocalo hace de segundo escalon)
+            dx, dz = c["N"]
+            for u in range(u0 - 1, u1 + 1):
+                x, _, z = self.celda(cara, u, 0)
+                o.mat(x + dx, 1, z + dz, "zocalo")
+                o.mat(x + 2 * dx, 1, z + 2 * dz, "piedra")
 
     def terminar(self):
         """Vigas interiores (cortadas en los huecos de escalera, con brochal) y revision del criterio."""
@@ -249,6 +322,8 @@ class Casa:
         o.fc(c, u - 0.1, yb - 0.12, -1.18, u + w + 0.1, yb + 0.02, -0.72, WD, 2)       # repisa interior
         x0, z0, x1, z1 = self.rect(cara, u - 0.4, 0.0, u + w + 0.4, 1.8)
         self.reservar(x0, z0, x1, z1, yb - 0.7, yb + h + 0.4, "ventana", "ventana %s%d" % (cara, u))
+        x0, z0, x1, z1 = self.rect(cara, u, -1.0, u + w, -1.9)
+        self.reservar(x0, z0, x1, z1, yb + 0.1, yb + h, "ventana_in", "ventana %s%d (por dentro)" % (cara, u))
         if flores:
             self.jardinera(c, u, yb, w)
         else:
@@ -267,18 +342,18 @@ class Casa:
             col = (206, 44, 56) if (_h(c["O"], u, i, 1) % 3) else (244, 240, 232)
             o.fc(c, u + t - 0.13, yb + hh * 0.7, 0.18, u + t + 0.13, yb + hh * 0.7 + 0.24, 0.44, col)
 
-    def puerta(self, cara, u, piso=0, escalones=True, w=2):
+    def puerta(self, cara, u, piso=0, escalones=True, w=2, h=3):
         """Hueco de puerta de w x 3, SIN hoja (para el sistema de abrir y cerrar), con marco, dintel y escalones."""
         o, c = self.o, self.caras[cara]
         yb = self.suelos[piso]
         for du in range(w):
-            for dy in range(3):
+            for dy in range(h):
                 o.clear(*self.celda(cara, u + du, yb + dy))
         F = 0.2
-        o.fc(c, u, yb, -1.0, u + F, yb + 3, 0.06, WDD, 2)
-        o.fc(c, u + w - F, yb, -1.0, u + w, yb + 3, 0.06, WDD, 2)
-        o.fc(c, u, yb + 3 - F, -1.0, u + w, yb + 3, 0.06, WDD, 2)
-        o.fc(c, u - 0.45, yb + 3, -0.05, u + w + 0.45, yb + 3.4, 0.3, WDD, 2)
+        o.fc(c, u, yb, -1.0, u + F, yb + h, 0.06, WDD, 2)
+        o.fc(c, u + w - F, yb, -1.0, u + w, yb + h, 0.06, WDD, 2)
+        o.fc(c, u, yb + h - F, -1.0, u + w, yb + h, 0.06, WDD, 2)
+        o.fc(c, u - 0.45, yb + h, -0.05, u + w + 0.45, yb + h + 0.4, 0.3, WDD, 2)
         o.fc(c, u + F, yb - 0.04, -1.0, u + w - F, yb + 0.02, 0.0, PIEDRA_F)
         if escalones and piso == 0:
             for du in range(-1, w + 1):
@@ -287,9 +362,10 @@ class Casa:
                 o.mat(x + dx, 1, z + dz, "zocalo")
                 o.mat(x + 2 * dx, 1, z + 2 * dz, "piedra")
         xa, za, xb, zb = self.rect(cara, u - 1, -1, u + w + 1, -4)
-        self.reservar(xa, za, xb, zb, yb, yb + 3, "paso", "paso de la puerta %s (dentro)" % cara)
-        xa, za, xb, zb = self.rect(cara, u - 1, 0, u + w + 1, 3)
-        self.reservar(xa, za, xb, zb, 0, yb + 3, "paso", "paso de la puerta %s (fuera)" % cara)
+        self.reservar(xa, za, xb, zb, yb, yb + h, "paso", "paso de la puerta %s (dentro)" % cara)
+        if piso == 0:
+            xa, za, xb, zb = self.rect(cara, u - 1, 0, u + w + 1, 3)
+            self.reservar(xa, za, xb, zb, 0, yb + h, "paso", "paso de la puerta %s (fuera)" % cara)
 
     # ---------------------------------------------------------------- carteles y faroles
     def cartel_colgante(self, cara, u, y, simbolo="jarra"):
@@ -331,11 +407,13 @@ class Casa:
         mid = (A + B) / 2
         vc = (V0 + V1) / 2
         for sg in (-1, 1):
-            u0, u1 = (u + 0.09, u + 0.11) if sg > 0 else (u - 0.11, u - 0.09)
-            u2, u3 = (u + 0.11, u + 0.13) if sg > 0 else (u - 0.13, u - 0.11)
+            capa = [0]
 
             def P(w0, v0, w1, v1, col, alto=False):
-                a0, a1 = (u2, u3) if alto else (u0, u1)
+                # cada pieza del simbolo va 0,012 mas afuera que la anterior: nunca hay dos caras en el mismo plano
+                capa[0] += 1
+                d = 0.095 + 0.012 * capa[0]
+                a0, a1 = (u + 0.09, u + d) if sg > 0 else (u - d, u - 0.09)
                 o.fc(c, a0, vc + v0, mid + w0, a1, vc + v1, mid + w1, col)
             if simbolo == "jarra":
                 P(-0.26, -0.32, 0.14, 0.2, (214, 150, 52))               # cuerpo
@@ -348,6 +426,44 @@ class Casa:
                 P(-0.24, 0.32, -0.08, 0.38, (250, 248, 240))
                 P(-0.02, 0.32, 0.12, 0.37, (250, 248, 240))
                 P(0.08, 0.06, 0.14, 0.22, (250, 248, 240), True)          # gota de espuma
+            elif simbolo == "pocion":
+                P(-0.08, 0.12, 0.08, 0.3, (220, 214, 200))              # cuello
+                P(-0.1, 0.3, 0.1, 0.38, (150, 104, 60))                 # corcho
+                P(-0.26, -0.32, 0.26, 0.12, (220, 214, 200))            # vidrio
+                P(-0.2, -0.3, 0.2, -0.02, (150, 60, 190))               # liquido
+                P(-0.16, -0.02, 0.16, 0.06, (190, 110, 230))
+                P(-0.17, -0.22, -0.1, 0.0, (230, 190, 250), True)        # brillo
+                P(0.06, -0.12, 0.12, -0.06, (240, 220, 255), True)       # burbuja
+            elif simbolo == "yunque":
+                P(-0.3, 0.06, 0.24, 0.18, (70, 72, 82))                 # cara del yunque
+                P(0.24, 0.08, 0.36, 0.14, (70, 72, 82))                 # cuerno
+                P(-0.14, -0.16, 0.1, 0.06, (60, 62, 70))
+                P(-0.24, -0.3, 0.2, -0.16, (70, 72, 82))
+                P(-0.05, 0.18, 0.03, 0.42, (140, 96, 56))               # mango del martillo
+                P(-0.16, 0.34, 0.1, 0.44, (160, 162, 172))              # cabeza
+                P(-0.26, 0.2, -0.2, 0.24, (255, 170, 60))               # chispas
+                P(0.14, 0.24, 0.18, 0.28, (255, 200, 80))
+            elif simbolo == "sierra":
+                P(-0.32, -0.06, 0.2, 0.12, (196, 200, 210))             # hoja
+                for i in range(6):
+                    P(-0.3 + i * 0.085, -0.12, -0.26 + i * 0.085, -0.06, (176, 180, 190))
+                P(0.18, -0.08, 0.34, 0.2, (150, 96, 54))                # mango
+                P(0.22, -0.02, 0.3, 0.12, (90, 56, 32), True)
+                P(-0.3, 0.2, 0.3, 0.3, (170, 120, 70))                  # tablon
+                P(-0.3, 0.3, 0.3, 0.33, (120, 80, 46), True)
+            elif simbolo == "cama":
+                P(-0.32, -0.2, 0.32, -0.06, (130, 84, 50))
+                P(-0.32, -0.06, 0.32, 0.08, (200, 60, 60))
+                P(-0.3, 0.08, -0.08, 0.2, (245, 240, 230))
+                P(0.26, -0.3, 0.34, 0.24, (110, 70, 42))
+                P(-0.34, -0.3, -0.26, 0.04, (110, 70, 42))
+            elif simbolo == "libro":
+                P(-0.3, -0.24, 0.3, 0.2, (90, 50, 120))
+                P(-0.26, -0.2, -0.02, 0.16, (240, 234, 214), True)
+                P(0.02, -0.2, 0.26, 0.16, (240, 234, 214), True)
+                P(-0.03, -0.24, 0.03, 0.2, (60, 30, 90))
+                P(-0.06, 0.24, 0.06, 0.38, (190, 140, 255))
+                P(-0.14, 0.28, 0.14, 0.34, (170, 120, 240))
             else:   # escudo con espadas cruzadas
                 P(-0.3, -0.18, 0.3, 0.36, (220, 180, 70))
                 P(-0.22, -0.28, 0.22, -0.18, (220, 180, 70))
@@ -378,38 +494,51 @@ class Casa:
         if not interior:
             x0, z0, x1, z1 = self.rect(cara, u - 0.3, 0, u + 0.3, 0.8)
             self.ocupa("farol de pared", x0, z0, x1, z1, top - 1.3, top + 0.2, False, exterior=True)
+        else:
+            x0, z0, x1, z1 = self.rect(cara, u - 0.3, -1.0, u + 0.3, -1.8)
+            self.ocupa("farol de pared (%s %.1f)" % (cara, u), x0, z0, x1, z1, top - 1.3, top + 0.2, False)
 
-    def enredadera(self, cara, u, y0, y1, ancho=0.9):
-        """Enredadera fina: tallos delgados que suben con quiebres, ramitas laterales y hojas chicas de 3 verdes."""
+    def enredadera(self, cara, u, y0, y1, ancho=1.6):
+        """Enredadera frondosa: mata tupida al pie, 3 tallos que se abren en abanico, racimos de 2-3 hojas por paso
+        (cada hoja a otra profundidad, nunca en el mismo plano), florcitas y un remate que se derrama a los lados."""
         o, c = self.o, self.caras[cara]
-        verdes = ((56, 132, 46), (78, 160, 58), (104, 184, 72))
-        tallo = (74, 92, 40)
-        for t, du0 in enumerate((-ancho * 0.3, ancho * 0.25)):
-            uu = u + du0
-            y = y0
+        verdes = ((52, 126, 44), (72, 154, 56), (98, 180, 70), (62, 140, 50))
+        tallo = (70, 86, 38)
+        capa = [0]
+
+        def hoja(uc, v, sz, col):
+            capa[0] = (capa[0] + 1) % 7
+            w0 = 0.012 + capa[0] * 0.014
+            o.fc(c, uc - sz, v, w0, uc + sz, v + sz * 1.5, w0 + 0.05, col)
+        # mata al pie
+        for i in range(14):
+            du = ((_h(cara, u, i) % 11) - 5) / 5.0 * ancho * 0.35
+            v = y0 + (_h(cara, u, i, 3) % 5) * 0.09
+            hoja(u + du, v, 0.12 + (i % 3) * 0.03, verdes[i % 4])
+        alto = y1 - y0
+        for t, abre in enumerate((-0.5, 0.05, 0.45)):
+            y = y0 + 0.2
             k = 0
-            top = y1 - (t * 0.9)
+            top = y1 - abs(abre) * 0.9
             while y < top:
-                paso = 0.22
-                uu += ((_h(cara, u, t, k) % 5) - 2) * 0.03
-                uu = max(u - ancho / 2, min(u + ancho / 2, uu))
-                o.fc(c, uu - 0.025, y, 0.0, uu + 0.025, y + paso + 0.02, 0.04, tallo)
-                r = _h(cara, u, t, k, 1) % 6
-                if r < 4:
-                    sgn = -1 if r % 2 else 1
-                    lu = uu + sgn * (0.07 + (r % 3) * 0.03)
-                    sz = 0.07 + (r % 2) * 0.025
-                    o.fc(c, lu - sz, y + 0.04, 0.01, lu + sz, y + 0.04 + sz * 1.6, 0.07, verdes[(k + t) % 3])
-                if r == 5 and y < top - 0.5:          # ramita lateral con dos hojas
-                    sgn = -1 if k % 2 else 1
-                    o.fc(c, min(uu, uu + sgn * 0.3), y + 0.1, 0.0, max(uu, uu + sgn * 0.3), y + 0.13, 0.035, tallo)
-                    for j in (0.15, 0.3):
-                        lu = uu + sgn * j
-                        o.fc(c, lu - 0.06, y + 0.13, 0.01, lu + 0.06, y + 0.25, 0.06, verdes[(k + 2) % 3])
-                if (k + t) % 11 == 7:
-                    o.fc(c, uu + 0.04, y + 0.12, 0.03, uu + 0.1, y + 0.18, 0.08, (236, 232, 246))
-                y += paso
+                f = (y - y0) / max(alto, 0.1)
+                uu = u + abre * ancho * f + ((_h(cara, u, t, k) % 5) - 2) * 0.025
+                o.fc(c, uu - 0.025, y, 0.0, uu + 0.025, y + 0.2, 0.03, tallo)
+                for j in range(2 + (_h(cara, u, t, k, 9) % 2)):
+                    sg = -1 if (k + j) % 2 else 1
+                    lu = uu + sg * (0.08 + ((_h(cara, u, t, k, j) % 4) * 0.035))
+                    hoja(lu, y + j * 0.06, 0.07 + (_h(t, k, j) % 3) * 0.02, verdes[(k + j + t) % 4])
+                if (k + t) % 9 == 4:
+                    o.fc(c, uu + 0.05, y + 0.1, 0.11, uu + 0.12, y + 0.17, 0.13, (240, 236, 250))
+                    o.fc(c, uu + 0.07, y + 0.12, 0.13, uu + 0.1, y + 0.15, 0.14, (250, 220, 90))
+                y += 0.18
                 k += 1
+        # remate que se derrama a los lados bajo el alero
+        for sg in (-1, 1):
+            for i in range(6):
+                uu = u + sg * (ancho * 0.45 + i * 0.16)
+                v = y1 - 0.15 - (i % 3) * 0.12 - i * 0.04
+                hoja(uu, v, 0.09, verdes[(i + 1) % 4])
 
     # ---------------------------------------------------------------- chimenea
     def chimenea(self, cara, u, w=2):
@@ -481,21 +610,23 @@ class Casa:
     def cama_con_cofre(self, x, y, z, rot):
         """Cama (2x4) con el cofre a los pies, pegado y mirando hacia afuera (nunca hacia la cama).
         rot 0: cabecera en +Z; rot 2: cabecera en -Z; rot 1: cabecera en +X... (como el catalogo)."""
-        self.mueble(121, x, y, z, rot, "cama")
         o = self.o
+        o.obj(121, x, y, z, rot)
+        cuerpo = {0: (x, z + 0.75, x + 2, z + 4), 2: (x, z, x + 2, z + 3.25), 1: (x, z, x + 3.25, z + 2), 3: (x + 0.75, z, x + 4, z + 2)}[rot]
+        self.ocupa("cama", cuerpo[0], cuerpo[1], cuerpo[2], cuerpo[3], y, y + 1.4)
         # el cuerpo de la cama ocupa 3,25 de los 4 de la huella; el pie esta del lado opuesto a la cabecera
         if rot == 0:
             o.obj(122, x, y, z + 0.75 - 1.05, 0)
-            self.ocupa("cofre", x, z - 0.3, x + 2, z + 0.7, y, y + 2)
+            self.ocupa("cofre", x, z - 0.3, x + 2, z + 0.7, y, y + 1.2)
         elif rot == 2:
             o.obj(122, x, y, z + 3.25 + 0.05, 2)
-            self.ocupa("cofre", x, z + 3.3, x + 2, z + 4.3, y, y + 2)
+            self.ocupa("cofre", x, z + 3.3, x + 2, z + 4.3, y, y + 1.2)
         elif rot == 1:
             o.obj(122, x + 3.25 + 0.05, y, z, 1)
-            self.ocupa("cofre", x + 3.3, z, x + 4.3, z + 2, y, y + 2)
+            self.ocupa("cofre", x + 3.3, z, x + 4.3, z + 2, y, y + 1.2)
         else:
             o.obj(122, x - 0.3, y, z, 3)
-            self.ocupa("cofre", x - 0.3, z, x + 0.7, z + 2, y, y + 2)
+            self.ocupa("cofre", x - 0.3, z, x + 0.7, z + 2, y, y + 1.2)
 
 
 def planta(o, x, y, z, grande=False, casa=None):
@@ -545,6 +676,92 @@ def mesa_redonda(o, cx, y, cz, casa=None):
     o.put(int(math.floor(cx)), y, int(math.floor(cz)), COL_INV)
 
 
+MAD, MADO, MADC = (124, 82, 50), (84, 54, 34), (146, 100, 62)
+
+
+def pilar_baranda(o, px, ya, pz, H=1.15):
+    o.f(px, ya, pz, px + 0.26, ya + H + 0.15, pz + 0.26, MADO, 2)
+    o.f(px - 0.04, ya + H + 0.15, pz - 0.04, px + 0.3, ya + H + 0.25, pz + 0.3, MADC, 2)
+    o.f(px + 0.06, ya + H + 0.25, pz + 0.06, px + 0.2, ya + H + 0.33, pz + 0.2, MADC)
+
+
+def baranda(o, a, b, fijo, ya, eje="x", H=1.15, pilares=True, colision=True):
+    """Baranda recta de a a b sobre el eje dado ('x' o 'z'); 'fijo' es la coordenada (borde de 0,26) del otro eje.
+    Pilares con capitel en los extremos y cada ~3, pasamanos ancho, zocalo y balaustres cada 0,5."""
+    def F(p0, y0, q0, p1, y1, q1, col, pat=0):
+        if eje == "x":
+            o.f(p0, y0, q0, p1, y1, q1, col, pat)
+        else:
+            o.f(q0, y0, p0, q1, y1, p1, col, pat)
+    n = max(1, int(round((b - a) / 3.0)))
+    ps = [a + (b - a - 0.26) * i / n for i in range(n + 1)] if pilares else []
+    for p in ps:
+        if eje == "x":
+            pilar_baranda(o, p, ya, fijo, H)
+        else:
+            pilar_baranda(o, fijo, ya, p, H)
+    F(a, ya + H - 0.12, fijo - 0.03, b, ya + H + 0.04, fijo + 0.29, MAD, 2)
+    F(a, ya, fijo + 0.03, b, ya + 0.16, fijo + 0.23, MADO, 2)
+    t = a + 0.45
+    while t < b - 0.3:
+        if all(abs(t - (p + 0.13)) > 0.3 for p in ps):
+            F(t - 0.05, ya + 0.16, fijo + 0.08, t + 0.05, ya + H - 0.12, fijo + 0.18, MADO)
+        t += 0.5
+    if colision:
+        import math as _m
+        for q in range(int(_m.floor(a)), int(_m.ceil(b))):
+            if eje == "x":
+                o.put(q, int(_m.floor(ya)), int(_m.floor(fijo + 0.13)), COL_INV); o.put(q, int(_m.floor(ya)) + 1, int(_m.floor(fijo + 0.13)), COL_INV)
+            else:
+                o.put(int(_m.floor(fijo + 0.13)), int(_m.floor(ya)), q, COL_INV); o.put(int(_m.floor(fijo + 0.13)), int(_m.floor(ya)) + 1, q, COL_INV)
+
+
+def escalera_perimetral(c: "Casa", celdas, piso=0, mat="madera"):
+    """Escalera de bloques que sube 1 por celda siguiendo 'celdas' (lista de (x, z) pegadas a los muros, en orden).
+    Abre el hueco en el entrepiso sobre los peldanos (las vigas lo esquivan) y pone baranda en el borde del hueco."""
+    o = c.o
+    s = c.suelos[piso]
+    n = c.suelos[piso + 1] - s
+    assert len(celdas) >= n, "faltan celdas para la escalera"
+    yl = c.suelos[piso + 1] - 1
+    hueco = set()
+    for k in range(1, n + 1):
+        x, z = celdas[k - 1]
+        o.mbox(x, s, z, x, s + k - 1, z, mat)
+        if k < n:
+            o.clear(x, yl, z)
+            hueco.add((x, z))
+            c.huecos.append((yl, x, x + 1, z, z + 1))
+        c.reservar(x, z, x + 1, z + 1, s, s + k + 3, "paso", "escalera")
+    lx, lz = celdas[n - 1]
+    c.reservar(lx - 1, lz - 1, lx + 2, lz + 2, s + n, s + n + 3, "paso", "llegada de la escalera")
+    ya = c.suelos[piso + 1]
+    hechos = set()
+
+    def pil(px, pz):
+        k = (round(px, 2), round(pz, 2))
+        if k not in hechos:
+            hechos.add(k)
+            pilar_baranda(o, px, ya, pz)
+    for (x, z) in hueco:
+        for (dx, dz) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            q = (x + dx, z + dz)
+            if q in hueco or q == (lx, lz):
+                continue
+            if not (c.x0 < q[0] < c.x1 and c.z0 < q[1] < c.z1):
+                continue
+            if dx:
+                fx = x + 1 if dx > 0 else x - 0.26
+                baranda(o, z, z + 1, fx, ya, "z", pilares=False)
+                for zz in (z, z + 1 - 0.26):
+                    pil(fx, zz)
+            else:
+                fz = z + 1 if dz > 0 else z - 0.26
+                baranda(o, x, x + 1, fz, ya, "x", pilares=False)
+                for xx in (x, x + 1 - 0.26):
+                    pil(xx, fz)
+
+
 def escalera(c: Casa, x0, z0, z1, piso=0, dx=1):
     """Escalera recta de bloques de madera (1 de huella x 1 de contrahuella) que sube en +X (dx=1) o -X (dx=-1).
     Abre el hueco en el entrepiso (las vigas se cortan ahi y descansan en brochales) y pone una baranda robusta:
@@ -571,47 +788,14 @@ def escalera(c: Casa, x0, z0, z1, piso=0, dx=1):
     c.reservar(x0, z0 - 0.0, x0 + (n if dx == 1 else 1), z1 + 1, s, s + n, "paso", "escalera")
     lleg = xb if dx == 1 else xa - 2
     c.reservar(lleg, z0, lleg + 2, z1 + 1, s + n, s + n + 3, "paso", "llegada de la escalera")
-    # baranda arriba: lado abierto (largo) + extremo bajo
+    # baranda arriba: lado abierto (largo) + extremo bajo hasta el muro
     ya = c.suelos[piso + 1]
     abierto_z0 = z0 > c.z0 + 1
     zr = (z0 - 0.26) if abierto_z0 else (z1 + 1)
     xe = (xa - 0.26) if dx == 1 else xb
-    H = 1.15
-    MAD, MADO, MADC = (124, 82, 50), (84, 54, 34), (146, 100, 62)
-
-    def pilar(px, pz):
-        o.f(px, ya, pz, px + 0.26, ya + H + 0.15, pz + 0.26, MADO, 2)
-        o.f(px - 0.04, ya + H + 0.15, pz - 0.04, px + 0.3, ya + H + 0.25, pz + 0.3, MADC, 2)
-        o.f(px + 0.06, ya + H + 0.25, pz + 0.06, px + 0.2, ya + H + 0.33, pz + 0.2, MADC)
-    # lado largo
-    pilar(xa - 0.26, zr)
-    pilar(xb - 0.26 if dx == 1 else xb, zr)
-    xm = (xa + xb) / 2.0 - 0.13
-    pilar(xm, zr)
-    o.f(xa - 0.26, ya + H - 0.12, zr - 0.03, xb, ya + H + 0.04, zr + 0.29, MAD, 2)      # pasamanos
-    o.f(xa - 0.26, ya, zr + 0.03, xb, ya + 0.16, zr + 0.23, MADO, 2)                  # zocalo
-    xx = xa + 0.25
-    while xx < xb - 0.3:
-        if abs(xx - (xm + 0.13)) > 0.25:
-            o.f(xx - 0.05, ya + 0.16, zr + 0.08, xx + 0.05, ya + H - 0.12, zr + 0.18, MADO)
-        xx += 0.5
-    # extremo bajo (del pilar de la esquina hasta el muro)
-    zw0, zw1 = (z0 - 0.26, z1 + 1) if abierto_z0 else (z0, z1 + 1.26)
-    o.f(xe, ya + H - 0.12, zw0, xe + 0.26, ya + H + 0.04, zw1, MAD, 2)
-    o.f(xe, ya, zw0, xe + 0.26, ya + 0.16, zw1, MADO, 2)
-    zz = zw0 + 0.4
-    while zz < zw1 - 0.2:
-        o.f(xe + 0.08, ya + 0.16, zz - 0.05, xe + 0.18, ya + H - 0.12, zz + 0.05, MADO)
-        zz += 0.5
-    if dx != 1:
-        pilar(xe, zr)
-    # colision de la baranda
-    zc = z0 - 1 if abierto_z0 else z1 + 1
-    for x in range(xa, xb):
-        o.put(x, ya, zc, COL_INV); o.put(x, ya + 1, zc, COL_INV)
-    for z in range(z0, z1 + 1):
-        xc = xa - 1 if dx == 1 else xb
-        o.put(xc, ya, z, COL_INV); o.put(xc, ya + 1, z, COL_INV)
+    baranda(o, xa - 0.26 if dx == 1 else xa, xb if dx == 1 else xb + 0.26, zr, ya, "x")
+    zw0, zw1 = (z0, z1 + 1) if abierto_z0 else (z0, z1 + 1)
+    baranda(o, zw0, zw1, xe, ya, "z", pilares=False)
 
 
 def barra(o, x0, z0, x1, z1, y, frente="n", casa=None, nombre="mostrador"):

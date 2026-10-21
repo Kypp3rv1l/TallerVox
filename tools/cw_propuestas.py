@@ -1,4 +1,4 @@
-# Farlands Taller v0.1.6 - propuestas estilo Cube World (Thalmor City). Genera catalogo/estructuras/cw_*.json
+# Farlands Taller v0.1.7 - propuestas estilo Cube World (Thalmor City). Genera catalogo/estructuras/cw_*.json
 # Uso: python tools/cw_propuestas.py [carpeta_salida]
 # Cada casa pasa por Casa.revisar(): si un mueble pisa el paso de una puerta o escalera, queda pegado al fuego
 # o algo tapa una ventana por fuera, el generador se detiene y dice que fallo.
@@ -55,7 +55,7 @@ def casa_1_planta():
     c.mueble(127, 4, s, 5, 1, "estanteria")
     planta(o, 16, s, 5, grande=True, casa=c)
     jarron_flores(o, 4, s, 10, casa=c)
-    c.farol_pared("o", 3.0, s + 3); c.farol_pared("e", 3.0, s + 3)
+    c.farol_pared("o", 7.6, s + 3.5); c.farol_pared("e", 3.0, s + 3.5)
     return o
 
 
@@ -87,7 +87,7 @@ def casa_2_plantas():
     c.mueble(128, 14, s, 11, 0, "barril"); c.mueble(128, 14, s, 12, 0, "barril"); c.mueble(129, 13, s, 12, 0, "saco")
     c.mueble(161, 4, s, 5, 1, "lena")
     planta(o, 14, s, 5, grande=True, casa=c)
-    c.farol_pared("e", 8.0, s + 3); c.farol_pared("o", 2.0, s + 3)
+    c.farol_pared("e", 8.0, s + 3.5); c.farol_pared("o", 3.2, s + 3.5)
     # planta alta: dormitorio
     c.alfombra(7, 6, 12, 10.5, 1, AZUL, CELESTE, 0.5)
     c.cama_con_cofre(4.5, s2, 5, 2); c.cama_con_cofre(12.5, s2, 5, 2)
@@ -140,7 +140,7 @@ def taberna_gremio():
     c.mueble(127, 23, s, 18, 0, "estanteria")
     c.mueble(122, 27, s, 16, 3, "cofre")
     mesa_redonda(o, 22.5, s, 9, casa=c)
-    c.mueble(126, 20.4, s, 8.5, 0, "taburete"); c.mueble(126, 23.9, s, 8.5, 0, "taburete")
+    c.mueble(126, 20.1, s, 8.5, 0, "taburete"); c.mueble(126, 23.9, s, 8.5, 0, "taburete")
     planta(o, 12, s, 5, grande=True, casa=c); planta(o, 27, s, 5, grande=True, casa=c)
     for cn, u, y in (("o", 11.5, s + 3.5), ("s", 2.5, s + 3.5), ("e", 10.5, s + 3.5), ("n", 9.5, s + 3.5), ("n", 17.5, s + 3.5)):
         c.farol_pared(cn, u, y)
@@ -409,7 +409,8 @@ def plaza_arbol():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     solo = sys.argv[2].split(",") if len(sys.argv) > 2 else None
-    for fn in (casa_1_planta, casa_2_plantas, taberna_gremio, campo_terrazas, campo_ladera, plaza_arbol):
+    import cw_edificios
+    for fn in [casa_1_planta, casa_2_plantas, taberna_gremio, campo_terrazas, campo_ladera, plaza_arbol] + cw_edificios.TODOS:
         if solo and fn.__name__ not in solo:
             continue
         ob = fn()

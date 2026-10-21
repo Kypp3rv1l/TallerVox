@@ -1,11 +1,14 @@
 # Reglas de las casas
 
-## Estilo Cube World (v0.1.6, vigente)
+## Estilo Cube World (v0.1.7, vigente)
 
 Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el personaje mide 2). Lo arma `tools/cw_casas.py`.
 
 - **Material**: superficies grandes lisas, un color por bloque con leve variación de tono (sin ladrillo). Todo el detalle va en objetos de voxel chico.
   - muro (186,176,140) · zócalo (98,106,102) · techo (46,86,82) · suelo interior (156,152,138) · entrepiso y techo interior de madera.
+- **Sillares de esquina**: piedra clara que sobresale 0,08, trabada (hilada larga en una cara y corta en la otra, alternando). En casas en hilera, solo en las esquinas de los extremos.
+- **Enredaderas**: mata tupida al pie, 3 tallos en abanico, racimos de 2-3 hojas por paso a distintas profundidades, florcitas y remate que cae a los lados.
+- **Lados abiertos** (herrería, carpintería, campanario): pilares de piedra cada 4-5, viga de madera arriba y escalón corrido delante.
 - **Casa**: acera de losas de 2 tonos; la casa queda 2 bloques más alta (zócalo oscuro de 2 que sobresale 1). Muro de 7 de alto por planta; cornisa oscura entre plantas.
 - **Puerta**: hueco de 2×3 **sin hoja** (sistema de abrir y cerrar a futuro), marco de madera oscura, dintel que sobresale, umbral; un escalón de piedra + el zócalo hacen 2 escalones.
 - **Ventanas**: 2×2 **abiertas** (sin vidrio: se ve a través), alféizar a 2 del suelo, marco y cruz de madera oscura, repisa por dentro y **jardinera con flores** por fuera. Pocas: 1 o 2 por fachada y planta, simétricas, alineadas entre plantas; no en todas las caras. Hueco con Colisión invisible (89).
@@ -22,7 +25,9 @@ Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el perso
 ### Criterio (lo revisa `Casa.revisar()`, el generador se detiene si no se cumple)
 - Paso libre de 3 de fondo (y 1 más a cada lado) delante de cada puerta, por dentro y por fuera; pie y llegada de cada escalera libres; frente del hogar y de los tableros libre.
 - Nada inflamable (madera, tela, plantas) a menos de 2,5 bloques del fuego.
-- Por fuera nada (carteles, faroles, barriles, bancos) tapa una ventana.
+- Por fuera nada (carteles, faroles, barriles, bancos) tapa una ventana; por dentro nada alto (estantes, armarios, faroles) queda delante de una ventana.
+- Ningún objeto choca con otro (faroles de pared incluidos).
+- Los símbolos y piezas finas que se superponen van a distinta profundidad (nunca dos caras en el mismo plano: si no, parpadean).
 
 ## Reglas anteriores (v0.1.4, sacadas de la Taberna v1)
 
