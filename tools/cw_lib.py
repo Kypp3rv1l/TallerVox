@@ -8,6 +8,7 @@
 #     de tono por bloque (sin dibujo de ladrillo). Es lo que hace que los muros se vean como en Cube World.
 import json, hashlib
 
+CONSTRUCTORES = {}   # id del catalogo -> funcion(o, x, y, z, rot) con un modelo propio (lo llena cw_muebles)
 COL_INV = 89      # colision invisible (deja pasar la luz: ventanas)
 SHELL = 90        # solido invisible que tapa el cielo (muros, techos: el interior queda en penumbra)
 
@@ -125,10 +126,68 @@ class Obra:
 
     # ---- objetos del catalogo (101-163, 1001+) ----
     def obj(self, cat, x, y, z, rot=0, solid=0):
-        self.placed.append([cat, x, y, z, rot, solid])
+        """Objeto: si hay un modelo propio detallado (cw_muebles), se arma con cajas finas; si no, va el del catalogo."""
+        fn = CONSTRUCTORES.get(cat)
+        if fn:
+            fn(self, x, y, z, rot)
+        else:
+            self.placed.append([cat, x, y, z, rot, solid])
+
+    # ---- sin parpadeo: dos caras en el mismo plano, mirando al mismo lado y solapadas, parpadean ----
+    def sin_parpadeo(self, eps=0.008, pasadas=12):
+        from collections import defaultdict
+        B = self.fine
+        piel = getattr(self, "piel_desde", len(B))
+        total = 0
+        for _ in range(pasadas):
+            grupos = defaultdict(list)
+            for i, b in enumerate(B):
+                for a in range(3):
+                    grupos[(a, 0, round(b[a] * 200))].append(i)
+                    grupos[(a, 1, round(b[a + 3] * 200))].append(i)
+            mover = {}
+            for (a, s, _), ids in grupos.items():
+                if len(ids) < 2:
+                    continue
+                u, v = [q for q in range(3) if q != a]
+                ids.sort(key=lambda i: B[i][u])
+                act = []
+                for i in ids:
+                    bi = B[i]
+                    act = [j for j in act if B[j][u + 3] > bi[u] + 1e-4]
+                    for j in act:
+                        bj = B[j]
+                        if bi[6:11] == bj[6:11]:
+                            continue
+                        if min(bi[v + 3], bj[v + 3]) - max(bi[v], bj[v]) <= 1e-4:
+                            continue
+                        if min(bi[u + 3], bj[u + 3]) - max(bi[u], bj[u]) <= 1e-4:
+                            continue
+                        pi, pj = i >= piel, j >= piel
+                        if pi and pj:
+                            continue                      # dos pieles nunca se solapan de verdad
+                        if pi or pj:
+                            k = j if pi else i            # la piel de los muros no se mueve: se mueve el detalle
+                        else:
+                            ai = (bi[u + 3] - bi[u]) * (bi[v + 3] - bi[v])
+                            aj = (bj[u + 3] - bj[u]) * (bj[v + 3] - bj[v])
+                            k = i if ai < aj or (ai == aj and i > j) else j
+                        mover[(k, a, s)] = True
+                    act.append(i)
+            if not mover:
+                break
+            for (k, a, s) in mover:
+                if s:
+                    B[k][a + 3] = round(B[k][a + 3] + eps, 4)
+                else:
+                    B[k][a] = round(B[k][a] - eps, 4)
+            total += len(mover)
+        self.parpadeos_corregidos = total
+        return total
 
     # ---- piel de los materiales lisos ----
     def piel(self):
+        self.piel_desde = len(self.fine)
         n = 0
         for (x, y, z), m in self.mats.items():
             vis = False
@@ -151,11 +210,12 @@ class Obra:
         return n
 
     # ---- salida ----
-    def escribir(self, ruta, taller="0.1.7"):
+    def escribir(self, ruta, taller="0.1.8"):
         for fn in self.finales:
             fn()
         self.finales = []
         self.piel()
+        self.sin_parpadeo()
         allc = dict(self.cubes)
         for p in self.mats:
             allc[p] = SHELL

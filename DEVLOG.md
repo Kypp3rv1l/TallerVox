@@ -1,5 +1,17 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.8
+- **Muebles propios detallados** (`tools/cw_muebles.py`): cama, cofre, mesas, silla, banco, taburete, estantería con libros y tarros, armario con puertas en relieve, barril de duelas con aros, saco, leña con vetas, yunque sobre tocón, candelabro, maceta, valla, juncos y **carreta** (ruedas de rayos con llanta y cubo, eje que une las ruedas, varas y pie de apoyo). Reemplazan a los del catálogo del juego en todas las estructuras.
+- **Sin parpadeo**: antes de guardar, el generador busca caras en el mismo plano que se solapan y separa la más chica (texturas que se «mesheaban»).
+- **Enredaderas nuevas** en rejilla de 1/8, como las plantas de Cube World: mata al pie, tallos con quiebres y ramitas, hojas de 2x2 a 1-3 de profundidad, florcitas; se arman al final y esquivan ventanas, puertas, carteles y faroles.
+- Herramientas detalladas en tablas de pared: martillos, tenazas, lima, atizador, herraduras, serrucho, escuadra, formones, hacha.
+- **Herrería** rehecha: cartel en el pilar de la entrada, campana de forja, barra al rojo, fuelle de cuero, tina de temple, piedra de afilar, carbonera, lingotes, armero con espadas, lanza, hacha y escudo.
+- **Carpintería** rehecha: banco con tornillo y herramientas, virutas, caballetes con tronco a medio descortezar, tablas de pie, silla y barril a medio armar.
+- **Pabellón** solo cuerpo a cuerpo: losas grandes de dos tonos, ruedo de arena con bordillo, estandartes, seis muñecos (cuerpo de paja, cabeza cosida, casco o escudo). La puntería pasa al nuevo **`cw_campo_tiro`** (puesto techado, 4 calles con cuerdas, dianas a 10/14/18/22, fardos de parapeto, barriles con flechas, arcos).
+- **Casas en hilera**: techo a dos aguas con hastiales; la casa alta sube sus muros por encima de las bajas y lleva sillares solo donde queda a la vista; cornisas a distinta altura; ventanas simétricas; **cocinas** en las tres (hogar con olla colgada o cocina de hierro, encimera con tabla de picar, verduras y pan, repisa de platos, ollas, ristras).
+- **Torres**: escaleras de mano abiertas con baranda (las barandas no se meten en los muros) y pisos acomodados; campanario simétrico (ventanas de 2 centradas).
+- **Granero**: paja tupida en cada box, fardos en rejilla con cuerdas, baldes; carreta nueva.
+
 ## v0.1.7
 - **Catálogo nuevo**: se sacaron las casas antiguas (y la Taberna v1 y la caseta de ejemplo); quedan solo las 18 estructuras `cw_`.
 - **12 estructuras nuevas**: `cw_tienda_pociones`, `cw_herreria` (semiabierta, fragua con chimenea, yunque, pila de temple, piedra de afilar), `cw_carpinteria` (semiabierta), `cw_pabellon_entrenamiento` (suelo de laberinto, columnas, muñecos, dianas), `cw_casas_hilera` (3 casas con muro compartido), `cw_posada_balcon` (balcón y escalera exterior), `cw_pozo`, `cw_torre_vigia` (campanario), `cw_granero_establo` (5 boxes, monturas), `cw_muro_porton` (muralla, casa de guardia, rastrillo), `cw_puente_piedra`, `cw_torre_arcana` (encantamientos, biblioteca, observatorio).

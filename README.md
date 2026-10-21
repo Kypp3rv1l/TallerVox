@@ -6,10 +6,10 @@ archivos `.json` entendibles, para pegarlas luego en la semilla fija.
 - **Estructuras**: tamaño de casa como máximo (la casa más grande como referencia).
 - **Zonas**: sitios grandes (poblados, el árbol gigante…); en ellas se pueden **estampar estructuras** del catálogo y construir encima.
 - **Catálogo «Mis creaciones»**: cada creación se guarda con nombre, captura y archivo; se pueden reabrir, estampar, borrar e importar.
-- **Estructuras estilo Cube World** en `catalogo/estructuras` (18, prefijo `cw_`: casas, taberna y gremio, posada, tienda de pociones, herrería, carpintería, pabellón de entrenamiento, granero, torres, muralla, puente, pozo, plaza y campos). Las genera `tools/cw_propuestas.py`; reglas en `docs/reglas_casas.md`.
+- **Estructuras estilo Cube World** en `catalogo/estructuras` (19, prefijo `cw_`: casas, taberna y gremio, posada, tienda de pociones, herrería, carpintería, pabellón de entrenamiento, campo de tiro, granero, torres, muralla, puente, pozo, plaza y campos). Las genera `tools/cw_propuestas.py`; reglas en `docs/reglas_casas.md`.
 - Mismas herramientas que el editor de mundo del juego (bloques, pincel, caja, detalles, voxel fino 1/8, catálogo de objetos, mover, pegar).
 
-Versión actual: **0.1.7** (ver `DEVLOG.md`).
+Versión actual: **0.1.8** (ver `DEVLOG.md`).
 
 ## Carpetas
 

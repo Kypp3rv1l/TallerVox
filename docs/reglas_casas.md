@@ -1,13 +1,17 @@
 # Reglas de las casas
 
-## Estilo Cube World (v0.1.7, vigente)
+## Estilo Cube World (v0.1.8, vigente)
 
 Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el personaje mide 2). Lo arma `tools/cw_casas.py`.
 
 - **Material**: superficies grandes lisas, un color por bloque con leve variación de tono (sin ladrillo). Todo el detalle va en objetos de voxel chico.
   - muro (186,176,140) · zócalo (98,106,102) · techo (46,86,82) · suelo interior (156,152,138) · entrepiso y techo interior de madera.
 - **Sillares de esquina**: piedra clara que sobresale 0,08, trabada (hilada larga en una cara y corta en la otra, alternando). En casas en hilera, solo en las esquinas de los extremos.
-- **Enredaderas**: mata tupida al pie, 3 tallos en abanico, racimos de 2-3 hojas por paso a distintas profundidades, florcitas y remate que cae a los lados.
+- **Enredaderas**: en rejilla de 1/8 (como las plantas de Cube World): mata al pie, tallos que suben con quiebres y ramitas, hojas de 2x2 a 1-3 celdas del muro, más tupida abajo; nunca tapan ventanas, puertas, carteles ni faroles. Van en paños de muro libres (hastiales, esquinas).
+- **Muebles y herramientas**: modelos propios en rejilla de 1/8-1/16 con tablas separadas, herrajes, vetas, aros; nada de cajas lisas sueltas.
+- **Escaleras de mano** en torres y espacios chicos: largueros que asoman 1,1 sobre el piso de arriba, hueco de 1x1 con baranda solo en los lados abiertos.
+- **Casas en hilera**: techo a dos aguas con cumbrera paralela a la calle; la más alta se arma al final; sillares solo en las esquinas a la vista.
+- **Carteles** colgados donde se ve la entrada (en talleres abiertos, del pilar de la entrada).
 - **Lados abiertos** (herrería, carpintería, campanario): pilares de piedra cada 4-5, viga de madera arriba y escalón corrido delante.
 - **Casa**: acera de losas de 2 tonos; la casa queda 2 bloques más alta (zócalo oscuro de 2 que sobresale 1). Muro de 7 de alto por planta; cornisa oscura entre plantas.
 - **Puerta**: hueco de 2×3 **sin hoja** (sistema de abrir y cerrar a futuro), marco de madera oscura, dintel que sobresale, umbral; un escalón de piedra + el zócalo hacen 2 escalones.
@@ -27,7 +31,8 @@ Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el perso
 - Nada inflamable (madera, tela, plantas) a menos de 2,5 bloques del fuego.
 - Por fuera nada (carteles, faroles, barriles, bancos) tapa una ventana; por dentro nada alto (estantes, armarios, faroles) queda delante de una ventana.
 - Ningún objeto choca con otro (faroles de pared incluidos).
-- Los símbolos y piezas finas que se superponen van a distinta profundidad (nunca dos caras en el mismo plano: si no, parpadean).
+- Nunca dos caras en el mismo plano solapadas (parpadean): lo corrige `Obra.sin_parpadeo()` al guardar.
+- Cada edificio tiene un uso claro y su mobiliario lo cuenta (cocina en las casas, puntería separada del cuerpo a cuerpo, recepcionista con espacio detrás del mostrador).
 
 ## Reglas anteriores (v0.1.4, sacadas de la Taberna v1)
 

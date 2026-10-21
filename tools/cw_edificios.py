@@ -1,10 +1,12 @@
-# Farlands Taller v0.1.7 - estructuras nuevas estilo Cube World (pueblo y progreso).
+# Farlands Taller v0.1.8 - estructuras nuevas estilo Cube World (pueblo y progreso).
 # Las genera tools/cw_propuestas.py junto con las demas. Todas pasan por la revision de criterio de Casa
 # (paso de puertas/escaleras libre, nada inflamable junto al fuego, nada tapando ventanas, objetos que no chocan).
 import math
 from cw_lib import Obra, WD, WDD, COL_INV, _h
-from cw_casas import (Casa, planta, jarron_flores, mesa_redonda, escalera, escalera_perimetral, barra, tablero, farol,
-                      baranda, pilar_baranda, HOJA, HOJA2, HIERRO, HIERRO2, PIEDRA_F)
+from cw_casas import (Casa, planta, jarron_flores, mesa_redonda, escalera, escalera_perimetral, escalera_mano, barra, tablero,
+                      farol, baranda, pilar_baranda, HOJA, HOJA2, HIERRO, HIERRO2, PIEDRA_F)
+from cw_vox import Pieza, Vox, torno
+import cw_muebles as M
 from cw_propuestas import acera, afuera, farola, ROJO, ORO, MORADO, AZUL, CELESTE
 
 VIDRIO = (220, 214, 200)
@@ -82,61 +84,6 @@ def alambique(o, x, y, z):
     o.f(x + 1.7, y + 0.1, z + 0.68, x + 1.76, y + 0.3, z + 0.74, (160, 150, 130))
 
 
-def muneco(o, x, y, z, rot=0):
-    """Muneco de entrenamiento: poste, cuerpo de paja con cuerdas, brazos de madera, cabeza de saco y diana en el pecho."""
-    cx, cz = x + 0.5, z + 0.5
-    o.f(cx - 0.32, y, cz - 0.32, cx + 0.32, y + 0.12, cz + 0.32, WDD, 2)
-    o.f(cx - 0.07, y + 0.12, cz - 0.07, cx + 0.07, y + 1.0, cz + 0.07, WDD)
-    o.f(cx - 0.3, y + 1.0, cz - 0.22, cx + 0.3, y + 1.8, cz + 0.22, PAJA)
-    for yy in (1.15, 1.45, 1.7):
-        o.f(cx - 0.31, yy + y, cz - 0.23, cx + 0.31, yy + y + 0.05, cz + 0.23, (150, 110, 70))
-    if rot % 2 == 0:
-        o.f(cx - 0.75, y + 1.55, cz - 0.05, cx + 0.75, y + 1.65, cz + 0.05, WD)
-        zf = cz - 0.23 if rot == 0 else cz + 0.23
-        sg = -1 if rot == 0 else 1
-        o.f(cx - 0.17, y + 1.25, zf + sg * 0.02, cx + 0.17, y + 1.55, zf, (240, 236, 220))
-        o.f(cx - 0.1, y + 1.32, zf + sg * 0.035, cx + 0.1, y + 1.48, zf + sg * 0.02, (200, 50, 50))
-        o.f(cx - 0.04, y + 1.37, zf + sg * 0.05, cx + 0.04, y + 1.43, zf + sg * 0.035, (240, 236, 220))
-    else:
-        o.f(cx - 0.05, y + 1.55, cz - 0.75, cx + 0.05, y + 1.65, cz + 0.75, WD)
-    o.f(cx - 0.2, y + 1.8, cz - 0.2, cx + 0.2, y + 2.2, cz + 0.2, (196, 168, 120))
-    o.f(cx - 0.21, y + 1.85, cz - 0.21, cx + 0.21, y + 1.9, cz + 0.21, (150, 110, 70))
-    o.put(x, y, z, COL_INV); o.put(x, y + 1, z, COL_INV)
-
-
-def armero(o, x0, y, z, largo=3, frente="s"):
-    """Estante de armas apoyado en el piso: dos patas, travesanos y espadas/lanzas verticales."""
-    zf = z
-    o.f(x0, y, zf, x0 + 0.15, y + 1.8, zf + 0.5, WDD, 2)
-    o.f(x0 + largo - 0.15, y, zf, x0 + largo, y + 1.8, zf + 0.5, WDD, 2)
-    o.f(x0, y + 0.2, zf + 0.1, x0 + largo, y + 0.32, zf + 0.4, WD, 2)
-    o.f(x0, y + 1.4, zf + 0.1, x0 + largo, y + 1.52, zf + 0.4, WD, 2)
-    t = x0 + 0.45
-    i = 0
-    while t < x0 + largo - 0.3:
-        if i % 3 == 2:   # lanza
-            o.f(t - 0.03, y + 0.32, zf + 0.22, t + 0.03, y + 2.3, zf + 0.28, WD)
-            o.f(t - 0.06, y + 2.3, zf + 0.2, t + 0.06, y + 2.6, zf + 0.3, (200, 204, 214))
-        else:            # espada
-            o.f(t - 0.05, y + 0.32, zf + 0.2, t + 0.05, y + 1.55, zf + 0.3, (200, 204, 214))
-            o.f(t - 0.15, y + 1.55, zf + 0.18, t + 0.15, y + 1.62, zf + 0.32, BRONCE)
-            o.f(t - 0.04, y + 1.62, zf + 0.21, t + 0.04, y + 1.9, zf + 0.29, CUERO)
-            o.f(t - 0.06, y + 1.9, zf + 0.19, t + 0.06, y + 1.97, zf + 0.31, BRONCE)
-        t += 0.42
-        i += 1
-
-
-def fardo_paja(o, x, y, z, rot=0):
-    w, d = (1.3, 0.8) if rot % 2 == 0 else (0.8, 1.3)
-    o.f(x, y, z, x + w, y + 0.7, z + d, PAJA)
-    if rot % 2 == 0:
-        for t in (0.3, 0.95):
-            o.f(x + t, y - 0.01, z - 0.01, x + t + 0.05, y + 0.71, z + d + 0.01, (160, 110, 60))
-    else:
-        for t in (0.3, 0.95):
-            o.f(x - 0.01, y - 0.01, z + t, x + w + 0.01, y + 0.71, z + t + 0.05, (160, 110, 60))
-
-
 def mesa_trabajo(o, c, x0, z0, y, largo=4):
     """Banco de carpintero 4x1: tapa gruesa, patas, tornillo de banco, herramientas y virutas."""
     c.ocupa("banco de carpintero", x0, z0, x0 + largo, z0 + 1, y, y + 1.4)
@@ -206,243 +153,6 @@ def tienda_pociones():
     for xx, zz in ((6.3, 7.0), (6.3, 10.6), (10.3, 10.6)):
         hierbas_colgadas(o, xx, c.roof_y - 0.45, zz)
     c.farol_pared("e", 6.5, s + 3.5); c.farol_pared("o", 6.5, s + 3.5)
-    return o
-
-
-# ======================================================================== 2. herreria semiabierta
-def herreria():
-    W, D = 22, 18
-    o = Obra("cw_herreria", W, 26, D,
-             "Herreria semiabierta (progreso: forjar y mejorar armas). Frente y lado este abiertos con pilares de piedra. "
-             "Fragua de piedra con brasas, campana y chimenea, fuelle, yunque, pila de temple con agua, piedra de afilar, "
-             "herramientas colgadas y armero. Techo oscuro, cartel con yunque.",
-             entry=(10, 0, "norte"))
-    acera(o, 0, 0, W - 1, D - 1)
-    c = Casa(o, 3, 4, 18, 13, teja="techo_oscuro")      # interior x 4..17, z 5..12
-    s = c.suelos[0]
-    c.abrir("n", 1, 15, 0, cada=5)
-    c.abrir("e", 1, 9, 0, cada=4)
-    # fragua: cuerpo de piedra 3x2 contra el fondo oeste, brasas encima, campana y chimenea que atraviesa el techo
-    o.mbox(4, s, 11, 6, s, 12, "chimenea")
-    o.f(3.9, s + 1, 10.9, 7.1, s + 1.25, 13, PIEDRA_F)
-    o.f(4.2, s + 1.0, 11.2, 6.8, s + 1.1, 12.6, (255, 110, 30), 0, 1)
-    for i in range(7):
-        xx, zz = 4.3 + (i % 4) * 0.6, 11.3 + (i // 4) * 0.6
-        o.f(xx, s + 1.05, zz, xx + 0.35, s + 1.2, zz + 0.35, (255, 150 + (i % 3) * 30, 50), 0, 1)
-    for y in range(s + 3, c.cumbre + 2):
-        o.mbox(4, y, 11, 6, y, 12, "chimenea")
-    o.mbox(4, s + 3, 10, 6, s + 3, 10, "chimenea")
-    o.f(3.8, c.cumbre + 2, 10.8, 7.2, c.cumbre + 2.22, 13.2, PIEDRA_F)
-    o.f(4.4, c.cumbre + 2.22, 11.4, 6.6, c.cumbre + 2.26, 12.6, (30, 26, 24))
-    c.fuegos.append((5.5, 11.8, s, 2.5))
-    c.reservar(4, 8.5, 7, 11, s, s + 2, "paso", "frente de la fragua")
-    # fuelle de cuero (junto a la fragua a proposito; no es madera seca)
-    c.ocupa("fuelle", 7.1, 11.2, 8.3, 12.6, s, s + 1.3, False)
-    o.f(7.2, s, 11.4, 8.2, s + 0.5, 12.4, WDD, 2)
-    o.f(7.25, s + 0.5, 11.45, 8.15, s + 0.8, 12.35, CUERO)
-    o.f(7.2, s + 0.8, 11.4, 8.2, s + 0.9, 12.4, WD, 2)
-    o.f(7.0, s + 0.6, 11.85, 7.2, s + 0.7, 11.95, HIERRO)
-    c.mueble(135, 8, s, 8, 0, "yunque")
-    c.ocupa("pila de temple", 10, 11.4, 12.6, 12.9, s, s + 0.9, False)
-    o.f(10, s, 11.4, 12.6, s + 0.9, 12.9, (110, 106, 100))
-    o.f(10.15, s + 0.75, 11.55, 12.45, s + 0.82, 12.75, (60, 110, 160))
-    o.box(10, s, 11, 12, s, 12, COL_INV)
-    # piedra de afilar
-    c.ocupa("piedra de afilar", 14, 11, 15.6, 12.6, s, s + 1.4)
-    o.f(14.1, s, 11.2, 14.3, s + 0.9, 12.4, WDD); o.f(15.3, s, 11.2, 15.5, s + 0.9, 12.4, WDD)
-    o.f(14.3, s + 0.5, 11.3, 15.3, s + 1.4, 12.3, (150, 146, 140))
-    o.f(14.6, s + 0.8, 11.6, 15.0, s + 1.1, 12.0, (110, 106, 100))
-    o.f(15.5, s + 0.88, 11.75, 15.85, s + 0.96, 11.85, HIERRO)
-    # herramientas en el muro del fondo
-    sc = c.caras["s"]
-    for i, col in enumerate(((160, 162, 172), (140, 142, 150), (160, 162, 172), (120, 122, 130))):
-        u = 9.4 + i * 0.7
-        o.fc(sc, u, s + 2.2, -1.0, u + 0.06, s + 3.4, -1.08, WD)
-        o.fc(sc, u - 0.15, s + 3.2, -1.0, u + 0.21, s + 3.4, -1.12, col)
-    o.fc(sc, 9.0, s + 3.5, -1.0, 12.4, s + 3.62, -1.14, WDD, 2)
-    armero(o, 14, s, 5.1, 3)
-    c.ocupa("armero", 14, 5.1, 17, 5.6, s, s + 2.6)
-    c.mueble(129, 4, s, 6, 0, "saco de carbon")
-    o.f(4.2, s + 0.65, 6.2, 4.8, s + 0.8, 6.8, (30, 30, 34))
-    c.cartel_colgante("o", 2.5, s + 3, "yunque")
-    c.farol_pared("o", 3.5, s + 3.5)
-    return o
-
-
-# ======================================================================== 3. carpinteria semiabierta
-def carpinteria():
-    W, D = 22, 18
-    o = Obra("cw_carpinteria", W, 26, D,
-             "Carpinteria semiabierta (progreso: muebles, arcos, mejoras de casa). Frente abierto con pilares; banco de carpintero "
-             "con tornillo y herramientas, caballetes con tronco y sierra, pilas de tablas, troncos afuera, virutas. Cartel con sierra.",
-             entry=(10, 0, "norte"))
-    acera(o, 0, 0, W - 1, D - 1)
-    c = Casa(o, 3, 4, 18, 13, muro="muro_ocre", teja="techo_rojo")
-    s = c.suelos[0]
-    c.abrir("n", 1, 15, 0, cada=5)
-    c.ventana("e", 3); c.ventana("o", 5)
-    mesa_trabajo(o, c, 5, 11.6, s, 4)
-    caballete_tronco(o, c, 11, 8, s)
-    pila_tablas(o, c, 13.6, 11.8, s, 7)
-    pila_tablas(o, c, 4.2, 6.2, s, 4)
-    sc = c.caras["s"]
-    for i in range(4):   # sierras y escuadras colgadas
-        u = 2.4 + i * 0.8
-        o.fc(sc, u, s + 2.4, -1.0, u + 0.5, s + 2.9, -1.04, (196, 200, 210))
-        o.fc(sc, u + 0.4, s + 2.5, -1.04, u + 0.6, s + 2.9, -1.08, WD)
-    c.mueble(128, 16.5, s, 6, 0, "barril de clavos")
-    for (xx, zz) in ((20.1, 6), (20.9, 6)):          # troncos afuera, a lo largo del muro este
-        o.f(xx, 1, zz, xx + 0.6, 1.6, zz + 2.6, (112, 76, 44), 5)
-        o.f(xx + 0.05, 1.05, zz - 0.02, xx + 0.55, 1.55, zz, (200, 170, 120))
-    c.cartel_colgante("o", 2.5, s + 3, "sierra")
-    c.farol_pared("e", 7.0, s + 3.5); c.farol_pared("o", 7.6, s + 3.5)
-    return o
-
-
-# ======================================================================== 4. pabellon de entrenamiento
-def _laberinto(nx, nz, semilla=7):
-    """Laberinto por recorrido en profundidad; devuelve el set de paredes abiertas ((a),(b))."""
-    import random
-    r = random.Random(semilla)
-    vis, abiertos, pila = {(0, 0)}, set(), [(0, 0)]
-    while pila:
-        x, z = pila[-1]
-        vec = [(x + dx, z + dz) for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= x + dx < nx and 0 <= z + dz < nz and (x + dx, z + dz) not in vis]
-        if not vec:
-            pila.pop()
-            continue
-        n = r.choice(vec)
-        abiertos.add(frozenset(((x, z), n)))
-        vis.add(n)
-        pila.append(n)
-    return abiertos
-
-
-def diana(o, x, y, z):
-    """Diana de tiro con arco sobre tripode, mirando a -Z."""
-    cx = x + 0.5
-    for dx in (-0.5, 0.5):
-        o.f(cx + dx - 0.06, y, z + 0.5, cx + dx + 0.06, y + 1.8, z + 0.62, WDD)
-    o.f(cx - 0.06, y, z + 0.9, cx + 0.06, y + 1.6, z + 1.0, WDD)
-    for i, (r, col) in enumerate(((0.75, (240, 236, 220)), (0.58, (60, 110, 190)), (0.42, (200, 50, 50)), (0.24, (240, 200, 60)))):
-        o.f(cx - r, y + 1.6 - r, z + 0.4 - i * 0.02, cx + r, y + 1.6 + r, z + 0.5 - i * 0.02, col)
-    o.f(cx - 0.5, y + 1.0, z + 0.48, cx - 0.42, y + 2.2, z + 0.56, PAJA2)
-    o.put(x, y, z, COL_INV)
-
-
-def pabellon_entrenamiento():
-    W, D = 28, 24
-    o = Obra("cw_pabellon_entrenamiento", W, 20, D,
-             "Pabellon de entrenamiento (progreso: probar habilidades y armas). Plataforma de piedra con suelo de laberinto morado "
-             "y crema, 8 columnas de piedra con capitel, arquitrabe de madera y techo de losas escalonado. Munecos de practica, "
-             "dianas de tiro, armero y faroles colgantes.",
-             entry=(13, 0, "norte"))
-    acera(o, 0, 0, W - 1, D - 1)
-    o.mbox(2, 1, 3, 25, 2, 20, "zocalo")
-    o.mbox(3, 2, 4, 24, 2, 19, "acera")
-    o.mbox(10, 1, 2, 17, 1, 2, "piedra")
-    y = 3
-    # suelo de laberinto: fondo morado y muros crema de 0,5 sobre celdas de 2
-    X0, Z0, NX, NZ = 4, 5, 10, 7
-    o.f(X0, y, Z0, X0 + NX * 2, y + 0.02, Z0 + NZ * 2, (86, 40, 132))
-    ab = _laberinto(NX, NZ)
-    CR = (232, 220, 190)
-    for i in range(NX):
-        for j in range(NZ):
-            x0, z0 = X0 + i * 2, Z0 + j * 2
-            if i + 1 < NX and frozenset(((i, j), (i + 1, j))) not in ab:
-                o.f(x0 + 1.75, y + 0.02, z0 - 0.25, x0 + 2.25, y + 0.04, z0 + 2.25, CR)
-            if j + 1 < NZ and frozenset(((i, j), (i, j + 1))) not in ab:
-                o.f(x0 - 0.25, y + 0.04, z0 + 1.75, x0 + 2.25, y + 0.06, z0 + 2.25, CR)
-    o.f(X0 - 0.5, y + 0.06, Z0 - 0.5, X0 + NX * 2 + 0.5, y + 0.08, Z0, CR)
-    o.f(X0 - 0.5, y + 0.06, Z0 + NZ * 2, X0 + NX * 2 + 0.5, y + 0.08, Z0 + NZ * 2 + 0.5, CR)
-    o.f(X0 - 0.5, y + 0.08, Z0, X0, y + 0.1, Z0 + NZ * 2, CR)
-    o.f(X0 + NX * 2, y + 0.08, Z0, X0 + NX * 2 + 0.5, y + 0.1, Z0 + NZ * 2, CR)
-    # columnas 2x2 con basa y capitel
-    cols = [(3, 4), (9, 4), (17, 4), (23, 4), (3, 18), (9, 18), (17, 18), (23, 18), (3, 11), (23, 11)]
-    for (cx, cz) in cols:
-        o.mbox(cx, y, cz, cx + 1, y + 6, cz + 1, "pilar")
-        o.f(cx - 0.2, y, cz - 0.2, cx + 2.2, y + 0.3, cz + 2.2, PIEDRA_F)
-        o.f(cx - 0.25, y + 6.6, cz - 0.25, cx + 2.25, y + 7.0, cz + 2.25, PIEDRA_F)
-    # arquitrabe de madera sobre las columnas y vigas transversales
-    yt = y + 7
-    o.f(2.8, yt, 3.8, 25.2, yt + 0.8, 4.0 + 2.2, WDD, 2)
-    o.f(2.8, yt, 17.8, 25.2, yt + 0.8, 20.2, WDD, 2)
-    o.f(2.8, yt, 6.0, 5.2, yt + 0.8, 17.8, WDD, 2)
-    o.f(22.8, yt, 6.0, 25.2, yt + 0.8, 17.8, WDD, 2)
-    for xx in range(7, 23, 4):
-        o.f(xx, yt + 0.2, 6.0, xx + 0.6, yt + 0.8, 17.8, WD, 2)
-    # techo de losas escalonado
-    yr = yt + 1
-    o.f(5.2, yr - 0.03, 6.0, 22.8, yr, 17.8, (110, 76, 50), 2)
-    for k, (a0, a1, b0, b1) in enumerate(((2, 25, 3, 20), (4, 23, 5, 18), (6, 21, 7, 16), (8, 19, 9, 14))):
-        o.mbox(a0, yr + k, b0, a1, yr + k, b1, "techo")
-    # munecos, dianas, armero, faroles colgantes
-    for (mx, mz) in ((7, 8), (12, 8), (15, 8), (20, 8)):
-        muneco(o, mx, y, mz, 0)
-    diana(o, 11, y, 16); diana(o, 15, y, 16)
-    armero(o, 5, y, 18.3, 3)
-    armero(o, 19.5, y, 18.3, 3)
-    for (fx, fz) in ((8.0, 11.5), (19.9, 11.5)):
-        o.f(fx - 0.02, yt - 1.4, fz - 0.02, fx + 0.02, yt, fz + 0.02, HIERRO2)
-        farol(o, fx, yt - 2.55, fz, 1.0)
-    for (px, pz) in ((1, 1), (25, 1)):
-        farola(o, px, 1, pz)
-    return o
-
-
-# ======================================================================== 5. casas en hilera
-def _casa_hilera(o, x0, muro, teja, pisos, esquinas, cornisa, ventana_lado, chim_lado, idx):
-    c = Casa(o, x0, 4, x0 + 13, 15, pisos=pisos, muro=muro, teja=teja, esquinas=esquinas, cornisa=cornisa)
-    s = c.suelos[0]
-    c.puerta("n", 6)
-    for p in range(pisos):
-        c.ventana("n", 1, p); c.ventana("n", 11, p)
-    if pisos > 1:
-        c.ventana("s", 6, 1)
-    if ventana_lado:
-        for p in range(pisos):
-            if chim_lado == ventana_lado and p == 0:
-                continue
-            c.ventana(ventana_lado, 2 if chim_lado == ventana_lado else 5, p)
-    if chim_lado:
-        c.chimenea(chim_lado, 5)
-    c.farol_pared("n", 4.4, s + 1, interior=False); c.farol_pared("n", 9.6, s + 1, interior=False)
-    X = x0
-    if pisos > 1:
-        escalera(c, X + 3, 13, 14, 0, 1)
-        c.mueble(124, X + 7, s, 9, 0, "mesa"); c.mueble(131, X + 7.5, s, 8, 2, "silla"); c.mueble(131, X + 7.5, s, 10, 0, "silla")
-        c.mueble(128, X + 12, s, 11, 0, "barril")
-        planta(o, X + 12, s, 5, casa=c)
-        s2 = c.suelos[1]
-        c.cama_con_cofre(X + 1.5, s2, 5, 2)
-        c.mueble(133, X + 12, s2, 7, 3, "armario")
-        c.alfombra(X + 5, 6, X + 10, 10.5, 1, (AZUL, ROJO, MORADO)[idx % 3], ORO, 0.5)
-        c.farol_pared("e" if chim_lado != "e" else "o", 6.5, s + 3.5)
-        c.farol_pared("o" if chim_lado != "o" else "e", 6.5, s2 + 3.5)
-    else:
-        c.cama_con_cofre(X + 2.5, s, 11, 0)
-        c.mueble(124, X + 7, s, 9, 0, "mesa"); c.mueble(131, X + 7.5, s, 8, 2, "silla"); c.mueble(131, X + 7.5, s, 10, 0, "silla")
-        c.mueble(133, X + 1, s, 12, 1, "armario")
-        c.alfombra(X + 3, 7.5, X + 8, 11.5, 0, ROJO, ORO, 0.5)
-        c.farol_pared("s", 4.5, s + 3.5)
-    if idx == 2:
-        c.enredadera("n", 12.6, s - 1, c.roof_y - 0.5, 1.4)
-    return c
-
-
-def casas_hilera():
-    W, D = 44, 19
-    o = Obra("cw_casas_hilera", W, 30, D,
-             "Tres casas en hilera que comparten muro (para armar calles): ocre de 2 plantas, rosa de 2 plantas con techo rojo y "
-             "una de 1 planta. Cada una con su puerta, faroles, escalera o chimenea; sillares solo en las esquinas de la hilera.",
-             entry=(9, 0, "norte"))
-    acera(o, 0, 0, W - 1, D - 1)
-    A = _casa_hilera(o, 2, "muro_ocre", "techo", 2, ["no", "so"], ["n", "s", "o"], "o", "o", 0)
-    B = _casa_hilera(o, 15, "muro_rosa", "techo_rojo", 2, [], ["n", "s"], None, None, 1)
-    C = _casa_hilera(o, 28, "muro", "techo", 1, ["ne", "se"], ["n", "s", "e"], "e", "e", 2)
-    for c in (A, B, C):     # suelos repintados: el zocalo de la vecina no entra a la casa
-        o.mbox(c.x0 + 1, 1, c.z0 + 1, c.x1 - 1, 2, c.z1 - 1, "piso")
     return o
 
 
@@ -563,41 +273,6 @@ def campana(o, cx, ytop, cz):
     o.f(cx - 0.12, yb - 0.45, cz - 0.12, cx + 0.12, yb - 0.25, cz + 0.12, HIERRO)
 
 
-def torre_vigia():
-    W, D = 14, 14
-    o = Obra("cw_torre_vigia", W, 40, D,
-             "Torre de vigia / campanario de 3 plantas (8x8). Escalera de piedra pegada a los muros en cada planta, ventanas "
-             "angostas, ultima planta abierta con pilares y pretil, campana de bronce, techo con aguja y veleta.",
-             entry=(6, 13, "sur"))
-    acera(o, 0, 0, W - 1, D - 1)
-    c = Casa(o, 3, 3, 10, 10, pisos=3)              # interior x 4..9, z 4..9
-    s0, s1, s2 = c.suelos
-    c.puerta("s", 3)                                # x 6..7
-    for p in (0, 1):
-        for cn in ("n", "e", "o"):
-            c.ventana(cn, 3, p, flores=False, w=1)
-    c.ventana("s", 3, 1, flores=False, w=1)
-    escalera_perimetral(c, [(4, 8), (4, 7), (4, 6), (4, 5), (4, 4), (5, 4), (6, 4), (7, 4)], 0, "piedra")
-    escalera_perimetral(c, [(8, 4), (9, 4), (9, 5), (9, 6), (9, 7), (9, 8), (9, 9), (8, 9)], 1, "piedra")
-    for cn in ("n", "s", "e", "o"):
-        c.abrir(cn, 1, 7, 2, cada=5, viga=False)
-        for u in range(2, 6):
-            x, y, z = c.celda(cn, u, s2)
-            o.mat(x, y, z, c.muro)
-    # aguja y veleta sobre el techo
-    for y in range(c.cumbre + 1, c.cumbre + 4):
-        o.mbox(6, y, 6, 7, y, 7, "techo")
-    t = c.cumbre + 4
-    o.f(6.85, t, 6.85, 7.15, t + 1.4, 7.15, BRONCE)
-    o.f(6.2, t + 1.0, 6.95, 7.8, t + 1.1, 7.05, BRONCE)
-    o.f(7.4, t + 0.8, 6.98, 7.9, t + 1.2, 7.02, BRONCE)
-    # viga y campana
-    o.f(3.5, c.roof_y - 0.7, 6.7, 10.5, c.roof_y - 0.2, 7.3, WDD, 2)
-    campana(o, 7.0, c.roof_y - 0.7, 7.0)
-    c.farol_pared("e", 1.5, s0 + 3.5)
-    return o
-
-
 # ======================================================================== 9. granero y establo
 def montura(o, cara, c, u, y):
     """Silla de montar en una percha de pared (cara interior)."""
@@ -607,63 +282,6 @@ def montura(o, cara, c, u, y):
     o.fc(cara, u + 0.8, y + 0.75, -1.2, u + 1.0, y + 0.9, -1.6, CUERO)
     o.fc(cara, u + 0.1, y - 0.2, -1.6, u + 0.2, y + 0.5, -1.66, (90, 60, 40))
     o.fc(cara, u + 0.05, y - 0.3, -1.6, u + 0.25, y - 0.2, -1.68, HIERRO2)
-
-
-def granero_establo():
-    W, D = 28, 22
-    o = Obra("cw_granero_establo", W, 26, D,
-             "Granero y establo (progreso: monturas). Muros de tablas con sillares, porton de 4x4, cinco boxes con divisiones, "
-             "comedero y balde, paja en el suelo, fardos apilados, sillas de montar colgadas, horquilla, carreta afuera.",
-             entry=(14, 0, "norte"))
-    acera(o, 0, 0, W - 1, D - 1)
-    c = Casa(o, 3, 4, 24, 17, pisos=1, h=8, muro="madera_pared", teja="techo_rojo")   # interior x 4..23, z 5..16
-    s = c.suelos[0]
-    c.puerta("n", 9, w=4, h=4)                      # x 12..15
-    c.ventana("n", 3, flores=False); c.ventana("n", 17, flores=False)
-    c.ventana("o", 3, flores=False); c.ventana("e", 3, flores=False)
-    # boxes: x 4..23 en 5 de 4, fondo z 12..16
-    for b in (8, 12, 16, 20):
-        o.f(b - 0.1, s, 12, b + 0.1, s + 1.6, 17, (150, 104, 62), 2)
-        o.f(b - 0.15, s + 1.6, 12, b + 0.15, s + 1.75, 17, WDD, 2)
-    for i, b in enumerate((4, 8, 12, 16, 20)):
-        c.ocupa("box %d" % (i + 1), b, 12, b + 4, 17, s, s + 1.8, True, choca=False)
-        x0 = b + 0.1 if b > 4 else b
-        x1 = b + 3.9 if b < 20 else b + 4
-        for yy in (0.6, 1.25):
-            o.f(x0, s + yy, 11.9, x0 + 1.2, s + yy + 0.15, 12.1, WD, 2)
-            o.f(x1 - 1.2, s + yy, 11.9, x1, s + yy + 0.15, 12.1, WD, 2)
-        o.f(x0 + 1.2, s, 11.85, x0 + 1.4, s + 1.6, 12.15, WDD)
-        o.f(x1 - 1.4, s, 11.85, x1 - 1.2, s + 1.6, 12.15, WDD)
-        for xx in (x0, x1 - 1):
-            o.put(int(xx), s, 12, COL_INV); o.put(int(xx), s + 1, 12, COL_INV)
-        # paja del suelo, comedero y balde
-        for k in range(6):
-            px, pz = b + 0.3 + (_h(b, k) % 30) / 10.0, 12.4 + (_h(b, k, 1) % 40) / 10.0
-            o.f(px, s, pz, px + 0.6, s + 0.04, pz + 0.4, PAJA if k % 2 else PAJA2)
-        o.f(b + 0.8, s, 16.3, b + 3.2, s + 0.8, 16.95, (124, 84, 52), 2)
-        o.f(b + 0.9, s + 0.65, 16.4, b + 3.1, s + 0.75, 16.85, (120, 160, 70))
-        o.f(b + 3.3, s, 13.0, b + 3.75, s + 0.45, 13.45, (130, 90, 56), 2)
-        o.f(b + 3.35, s + 0.38, 13.05, b + 3.7, s + 0.42, 13.4, (70, 120, 170))
-    # fardos y horquilla
-    for (x, z, y) in ((4.2, 5.2, s), (4.2, 6.1, s), (4.2, 5.6, s + 0.7)):
-        fardo_paja(o, x, y, z, 0)
-    c.ocupa("fardos", 4.2, 5.2, 5.5, 6.9, s, s + 1.4, True)
-    for (x, z, y) in ((21.8, 5.2, s), (21.8, 6.1, s)):
-        fardo_paja(o, x, y, z, 0)
-    c.ocupa("fardos", 21.8, 5.2, 23.1, 6.9, s, s + 0.7, True)
-    o.f(16.25, s, 11.6, 16.32, s + 2.0, 11.68, WD)
-    for dx in (-0.12, 0.0, 0.12):
-        o.f(16.26 + dx, s + 2.0, 11.6, 16.3 + dx, s + 2.35, 11.66, HIERRO2)
-    o.f(16.14, s + 1.98, 11.6, 16.44, s + 2.03, 11.66, HIERRO2)
-    ce = c.caras["e"]
-    montura(o, ce, c, 2.5, s + 2.2); montura(o, ce, c, 4.5, s + 2.2)
-    c.ocupa("sillas de montar", 22, 6.5, 23.0, 9.5, s + 1.8, s + 3.2, True)
-    c.farol_pared("o", 8.0, s + 4); c.farol_pared("s", 10.5, s + 4.5)
-    # afuera: carreta y fardos
-    o.obj(1016, 26, 1, 8, 1)
-    for (x, z, y) in ((25.6, 11.0, 1), (25.6, 11.9, 1)):
-        fardo_paja(o, x, y, z, 1)
-    return o
 
 
 # ======================================================================== 10. muro de ciudad con porton
@@ -808,12 +426,798 @@ def telescopio(o, x, y, z):
         o.f(x - r, y + 1.42 + i * 0.16, z + 0.2 - i * 0.28, x + r, y + 1.6 + i * 0.16, z + 0.5 - i * 0.28, BRONCE if i % 2 else (210, 170, 90))
 
 
+# ======================================================================== piezas detalladas (v0.1.8)
+def muneco(o, x, y, z, rot=0, casco=False, escudo=False, k=0):
+    """Muneco de practica (1x1, mira a -Z): base de piedra, poste, torso de paja atado, brazos de madera con paja,
+    cabeza de saco cosida con ojos de boton, parche-diana en el pecho; opcional casco abollado y escudo en el brazo."""
+    p = Pieza(1, 1)
+    v = Vox(0.125)
+    torno(v, 4.0, 4.0, 0, [3.6], lambda a, t, b: (110, 106, 100) if b else (130, 126, 118), hueco=False)
+    pj = (PAJA, PAJA2, (236, 214, 140))
+
+    # torso de paja (caja de 6x7x4 voxeles, hombros mas anchos, cintura atada) con pajas sueltas
+    for j in range(9, 16):
+        ancho = 3 if j >= 13 else (2 if j in (9, 10) else 3)
+        for i in range(4 - ancho, 4 + ancho):
+            for kk in range(2, 6):
+                cuerda = j in (10, 14)
+                v.set(i, j, kk, (150, 108, 60) if cuerda else pj[_h(i, j, kk) % 3])
+    for (i, j, kk) in ((0, 13, 3), (7, 14, 4), (1, 9, 4), (6, 11, 2), (3, 16, 3), (5, 16, 4), (2, 12, 1), (5, 13, 6)):
+        v.set(i, j, kk, (240, 220, 150))
+    p.vox(v)
+    p.f(0.4375, 0.125, 0.4375, 0.5625, 1.125, 0.5625, M.MADO)
+    p.f(-0.25, 1.5, 0.4375, 1.25, 1.625, 0.5625, M.MAD, 2)
+    for xa in (-0.25, 1.0625):
+        p.f(xa, 1.4375, 0.375, xa + 0.1875, 1.6875, 0.625, PAJA2)
+        p.f(xa + 0.0625, 1.42, 0.36, xa + 0.125, 1.705, 0.64, (150, 108, 60))
+    p.f(0.3125, 1.1875, 0.1, 0.6875, 1.5625, 0.12, (236, 230, 214))     # parche
+    p.f(0.375, 1.25, 0.08, 0.625, 1.5, 0.1, (190, 46, 46))
+    p.f(0.4375, 1.3125, 0.06, 0.5625, 1.4375, 0.08, (236, 230, 214))
+    p.f(0.375, 1.875, 0.375, 0.625, 1.9375, 0.625, (150, 108, 60))       # cuello atado
+    p.f(0.3125, 1.9375, 0.3125, 0.6875, 2.3125, 0.6875, (198, 170, 122))  # cabeza
+    p.f(0.375, 2.125, 0.29, 0.4375, 2.1875, 0.3125, (30, 30, 34))
+    p.f(0.5625, 2.125, 0.29, 0.625, 2.1875, 0.3125, (30, 30, 34))
+    p.f(0.375, 2.0, 0.3, 0.625, 2.03, 0.3125, (110, 80, 50))
+    for xx in (0.4, 0.48, 0.56):
+        p.f(xx, 1.98, 0.29, xx + 0.025, 2.05, 0.3, (110, 80, 50))
+    if casco:
+        p.f(0.28, 2.25, 0.28, 0.72, 2.4375, 0.72, (120, 124, 134))
+        p.f(0.25, 2.22, 0.25, 0.75, 2.27, 0.75, (96, 100, 110))
+        p.f(0.47, 2.0, 0.24, 0.53, 2.25, 0.29, (96, 100, 110))
+        p.f(0.6, 2.36, 0.27, 0.68, 2.42, 0.28, (80, 84, 94))
+    else:
+        p.f(0.4375, 2.3125, 0.4375, 0.5625, 2.4375, 0.5625, PAJA)
+        p.f(0.375, 2.3125, 0.5, 0.4375, 2.375, 0.5625, PAJA2)
+    if escudo:
+        p.f(-0.3, 1.1, 0.25, 0.0, 1.9, 0.33, (140, 92, 54), 2)
+        p.f(-0.35, 1.2, 0.25, -0.3, 1.8, 0.33, (140, 92, 54), 2)
+        p.f(-0.3, 1.45, 0.21, 0.0, 1.55, 0.25, M.HIE2)
+        p.f(-0.2, 1.4, 0.19, -0.1, 1.6, 0.21, M.HIE)
+    p.poner(o, x, y, z, rot)
+    o.put(int(x), y, int(z), COL_INV); o.put(int(x), y + 1, int(z), COL_INV)
+
+
+def espada(p, x, y, z, alto=1.3, guarda=M.ORO):
+    """Espada vertical (punta abajo) en el marco de una Pieza; (x, z) = centro, y = punta."""
+    hoja = alto * 0.68
+    p.f(x - 0.04, y, z - 0.02, x + 0.04, y + 0.08, z + 0.02, M.ACERO2)
+    p.f(x - 0.06, y + 0.08, z - 0.025, x + 0.06, y + hoja, z + 0.025, M.ACERO)
+    p.f(x - 0.012, y + 0.15, z - 0.03, x + 0.012, y + hoja - 0.05, z + 0.03, M.ACERO2)
+    p.f(x - 0.18, y + hoja, z - 0.05, x + 0.18, y + hoja + 0.06, z + 0.05, guarda)
+    p.f(x - 0.21, y + hoja + 0.005, z - 0.035, x - 0.18, y + hoja + 0.09, z + 0.035, guarda)
+    p.f(x + 0.18, y + hoja + 0.005, z - 0.035, x + 0.21, y + hoja + 0.09, z + 0.035, guarda)
+    g0 = y + hoja + 0.06
+    for i in range(4):
+        p.f(x - 0.035, g0 + i * 0.07, z - 0.035, x + 0.035, g0 + i * 0.07 + 0.07, z + 0.035, M.CUERO if i % 2 else M.CUERO2)
+    p.f(x - 0.055, g0 + 0.28, z - 0.055, x + 0.055, g0 + 0.36, z + 0.055, guarda)
+
+
+def armero(o, x, y, z, rot=0):
+    """Armero 3x1 (mira a -Z): largueros con capitel, travesano ranurado, espadas, hacha, lanza y maza; escudo arriba."""
+    p = Pieza(3, 1)
+    for xa in (0.0, 2.875):
+        p.f(xa, 0, 0.0625, xa + 0.125, 1.9375, 0.5, M.MADO, 2)
+        p.f(xa - 0.03, 1.9375, 0.03, xa + 0.155, 2.0, 0.53, M.MADC)
+    p.f(0.125, 0, 0.0625, 2.875, 0.125, 0.5, M.MADO, 2)
+    p.f(0.125, 0.125, 0.4375, 2.875, 1.75, 0.5, M.MAD, 2)
+    p.f(0.125, 0.25, 0.125, 2.875, 0.375, 0.4375, M.MADC, 2)
+    p.f(0.125, 1.25, 0.125, 2.875, 1.375, 0.4375, M.MADC, 2)
+    for i, xx in enumerate((0.45, 0.85, 1.65, 2.05)):
+        espada(p, xx, 0.375, 0.25, 1.3 if i % 2 else 1.4, M.ORO if i % 2 else M.HIE2)
+    # lanza
+    p.f(1.22, 0.375, 0.22, 1.28, 2.3, 0.28, M.MADC)
+    p.f(1.21, 2.3, 0.21, 1.29, 2.36, 0.29, M.HIE2)
+    p.f(1.19, 2.36, 0.235, 1.31, 2.6, 0.265, M.ACERO)
+    p.f(1.22, 2.6, 0.24, 1.28, 2.7, 0.26, M.ACERO2)
+    # hacha
+    p.f(2.42, 0.375, 0.22, 2.48, 1.6, 0.28, M.MADC)
+    p.f(2.4, 1.4, 0.2, 2.5, 1.58, 0.3, M.HIE2)
+    p.f(2.5, 1.33, 0.235, 2.68, 1.62, 0.265, M.ACERO2)
+    p.f(2.68, 1.28, 0.235, 2.74, 1.68, 0.265, M.ACERO)
+    # escudo redondo arriba al centro
+    v = Vox(0.0625)
+    for j in range(-6, 6):
+        for i in range(-6, 6):
+            d = math.hypot(i + 0.5, j + 0.5)
+            if d < 6:
+                col = M.HIE2 if d > 5 or d < 1.4 else ((150, 40, 44) if (i + j) % 2 == 0 and d < 3.6 else (176, 120, 70))
+                v.set(i + 6, j + 6, 0, col)
+                if d > 5 or d < 1.4:
+                    v.set(i + 6, j + 6, -1, col)
+    p.vox(v, 1.125, 1.95, 0.4375)
+    p.poner(o, x, y, z, rot)
+
+
+def diana(o, x, y, z, rot=0, k=0):
+    """Diana de tiro 2x1 (mira a -Z): caballete de 3 patas, disco de paja con borde y aros pintados, flechas clavadas."""
+    p = Pieza(2, 1)
+    for (xx, zz) in ((0.25, 0.6), (1.6875, 0.6)):
+        p.f(xx, 0, zz, xx + 0.125, 2.4, zz + 0.125, M.MADO)
+    p.f(0.9375, 0, 0.9, 1.0625, 2.0, 1.0, M.MADO)
+    p.f(0.25, 0.75, 0.6, 1.8125, 0.875, 0.725, M.MAD)
+    v = Vox(0.0625)
+    aros = [(15.5, (196, 168, 110)), (14.5, (236, 230, 214)), (11.5, (40, 40, 44)), (8.5, (52, 92, 170)), (5.5, (190, 46, 46)), (2.5, (240, 200, 60))]
+    for j in range(-16, 16):
+        for i in range(-16, 16):
+            d = math.hypot(i + 0.5, j + 0.5)
+            if d >= 15.5:
+                continue
+            col = aros[0][1]
+            for (r, c2) in aros:
+                if d < r:
+                    col = c2
+            v.set(i + 16, j + 16, 0, col)
+            if d < 14.5:
+                v.set(i + 16, j + 16, 1, PAJA2)
+            v.set(i + 16, j + 16, 2, PAJA2 if d < 13 else (180, 150, 90))
+    p.vox(v, 0.0, 0.5, 0.4)
+    for n in range(3):
+        a = (k * 3 + n) * 2.2
+        r = 0.15 + ((k + n) % 3) * 0.22
+        cx, cy = 1.0 + math.cos(a) * r, 1.5 + math.sin(a) * r
+        p.f(cx - 0.02, cy - 0.02, -0.5, cx + 0.02, cy + 0.02, 0.4, (176, 140, 90))
+        p.f(cx - 0.06, cy - 0.005, -0.5, cx + 0.06, cy + 0.005, -0.32, (230, 230, 230) if n % 2 else (200, 60, 60))
+        p.f(cx - 0.005, cy - 0.06, -0.5, cx + 0.005, cy + 0.06, -0.32, (230, 230, 230) if n % 2 else (200, 60, 60))
+    p.poner(o, x, y, z, rot)
+    o.put(int(x), y, int(z), COL_INV); o.put(int(x) + (1 if rot % 2 == 0 else 0), y, int(z) + (0 if rot % 2 == 0 else 1), COL_INV)
+
+
+def carcaj_barril(o, x, y, z, k=0):
+    """Barril con flechas (para el puesto de tiro)."""
+    o.obj(128, x, y, z)
+    for n in range(9):
+        dx, dz = 0.25 + (n % 3) * 0.25, 0.25 + (n // 3) * 0.25
+        h = 1.3 + 0.55 + ((n * 7 + k) % 3) * 0.06
+        o.f(x + dx - 0.02, y + 1.0, z + dz - 0.02, x + dx + 0.02, y + h, z + dz + 0.02, (176, 140, 90))
+        col = ((230, 230, 230), (200, 60, 60), (60, 110, 190))[n % 3]
+        o.f(x + dx - 0.05, y + h - 0.2, z + dz - 0.005, x + dx + 0.05, y + h, z + dz + 0.005, col)
+        o.f(x + dx - 0.005, y + h - 0.2, z + dz - 0.05, x + dx + 0.005, y + h, z + dz + 0.05, col)
+
+
+def arco_colgado(o, cara, c, u, v):
+    """Arco largo colgado de dos clavijas (en la cara interior del muro)."""
+    g = M._pared(o, cara)
+    for i in range(12):
+        t = (i - 5.5) / 5.5
+        du = 0.28 * (1 - t * t)
+        g(u + du - 0.03, v + i * 0.16, u + du + 0.03, v + i * 0.16 + 0.16, 0.08, 0.13, M.MADC if 3 < i < 8 else M.MAD)
+    g(u + 0.0, v + 0.86, u + 0.06, v + 1.06, 0.07, 0.14, M.CUERO)
+    g(u - 0.01, v + 0.05, u + 0.01, v + 1.87, 0.095, 0.105, (230, 226, 210))
+    for vv in (v + 0.4, v + 1.5):
+        g(u + 0.15, vv, u + 0.22, vv + 0.07, 0.0, 0.2, M.MADO)
+
+
+# ---------------------------------------------------------------- herreria
+def fuelle(o, x, y, z):
+    """Fuelle de cuero 1,25 x 1 (a lo largo de x, boquilla hacia -x), sobre un caballete."""
+    for xx in (x + 0.1, x + 1.0):
+        for zz in (z + 0.15, z + 0.75):
+            o.f(xx, y, zz, xx + 0.1, y + 0.5, zz + 0.1, M.MADO)
+    o.f(x + 0.1, y + 0.5, z + 0.1, x + 1.25, y + 0.5625, z + 0.9, M.MAD, 2)
+    for i, (a, b) in enumerate(((0.15, 0.85), (0.1, 0.9), (0.15, 0.85))):
+        o.f(x + 0.3, y + 0.5625 + i * 0.09, z + a, x + 1.2, y + 0.5625 + i * 0.09 + 0.09, z + b, M.CUERO if i % 2 else M.CUERO2)
+    o.f(x + 0.1, y + 0.83, z + 0.1, x + 1.25, y + 0.89, z + 0.9, M.MAD, 2)
+    o.f(x + 1.25, y + 0.85, z + 0.45, x + 1.6, y + 0.9, z + 0.55, M.MADO)
+    o.f(x + 1.55, y + 0.8, z + 0.42, x + 1.62, y + 0.95, z + 0.58, M.MADO)
+    o.f(x - 0.35, y + 0.6, z + 0.44, x + 0.3, y + 0.72, z + 0.56, M.HIE2)
+
+
+def piedra_afilar(o, c, x, y, z):
+    """Piedra de afilar (rueda vertical en un bastidor de madera, manivela y artesa con agua). Ocupa 2x1 a lo largo de x."""
+    c.ocupa("piedra de afilar", x, z, x + 2, z + 1, y, y + 1.8)
+    for xx in (x + 0.3, x + 1.55):
+        o.f(xx, y, z + 0.1, xx + 0.15, y + 1.0, z + 0.25, M.MADO)
+        o.f(xx, y, z + 0.75, xx + 0.15, y + 1.0, z + 0.9, M.MADO)
+        o.f(xx, y + 1.0, z + 0.1, xx + 0.15, y + 1.1, z + 0.9, M.MAD)
+    o.f(x + 0.3, y + 0.2, z + 0.25, x + 1.7, y + 0.6, z + 0.75, M.MAD, 2)
+    o.f(x + 0.4, y + 0.6, z + 0.3, x + 1.6, y + 0.62, z + 0.7, (70, 110, 150))
+    v = Vox(0.0625)
+    for j in range(-9, 9):
+        for i in range(-9, 9):
+            d = math.hypot(i + 0.5, j + 0.5)
+            if d < 9:
+                v.set(i + 9, j + 9, 0, (150, 146, 140) if d > 1.6 else M.HIE2)
+    for (x0, y0, z0, x1, y1, z1, col, g) in v.cajas():
+        o.f(x + 0.4375 + x0, y + 0.55 + y0, z + 0.44, x + 0.4375 + x1, y + 0.55 + y1, z + 0.56, col)
+    o.f(x + 0.3, y + 1.08, z + 0.47, x + 1.85, y + 1.14, z + 0.53, M.HIE2)
+    o.f(x + 1.85, y + 0.9, z + 0.47, x + 1.91, y + 1.14, z + 0.53, M.HIE2)
+    o.f(x + 1.85, y + 0.85, z + 0.4, x + 1.91, y + 0.92, z + 0.6, M.MADC)
+    o.put(int(x), y, int(z), COL_INV); o.put(int(x) + 1, y, int(z), COL_INV)
+
+
+def tina_temple(o, c, x, y, z):
+    """Tina de temple: medio barril con agua y una hoja enfriandose."""
+    c.ocupa("tina de temple", x, z, x + 1, z + 1, y, y + 0.9, False)
+    v = Vox(0.125)
+    perf = [3.4, 3.7, 3.85, 3.9, 3.9, 3.9, 3.9]
+
+    def col(a, t, b):
+        if t == 6 and not b:
+            return (70, 120, 170)
+        if t in (1, 5) and b:
+            return M.HIE2
+        return M.MAD if int((a + math.pi) * 14 / (2 * math.pi)) % 2 else (126, 84, 50)
+    torno(v, 4.0, 4.0, 0, perf, col)
+    v.poner(o, x, y, z, 2)
+    o.f(x + 0.45, y + 0.82, z + 0.3, x + 0.5, y + 1.4, z + 0.36, M.ACERO)
+    o.f(x + 0.38, y + 1.4, z + 0.28, x + 0.57, y + 1.45, z + 0.38, M.HIE2)
+    o.f(x + 0.6, y + 0.875, z + 0.55, x + 0.75, y + 0.89, z + 0.7, (230, 236, 240))
+    o.put(int(x), y, int(z), COL_INV)
+
+
+def carbonera(o, c, x, y, z):
+    """Cajon de madera 1,5 x 1 lleno de carbon (montoncito en rejilla) con una pala."""
+    c.ocupa("carbonera", x, z, x + 1.5, z + 1, y, y + 1.1, False)
+    o.f(x, y, z, x + 1.5, y + 0.0625, z + 1, M.MADO)
+    for (a, b, c2, d) in ((0, 1.5, 0, 0.0625), (0, 1.5, 0.9375, 1), (0, 0.0625, 0, 1), (1.4375, 1.5, 0, 1)):
+        o.f(x + a, y, z + c2, x + b, y + 0.6, z + d, M.MAD, 2)
+    v = Vox(0.125)
+    for i in range(11):
+        for k in range(7):
+            h = 3 + int(2.2 * math.sin((i + 0.5) / 11 * math.pi) * math.sin((k + 0.5) / 7 * math.pi)) + (_h(i, k) % 2)
+            for j in range(h):
+                v.set(i, j, k, (30, 30, 34) if (_h(i, j, k) % 3) else (52, 52, 58))
+    v.poner(o, x + 0.0625, y + 0.0625, z + 0.0625)
+    o.f(x + 1.1, y + 0.6, z + 0.45, x + 1.16, y + 1.4, z + 0.51, M.MADC)
+    o.f(x + 1.02, y + 0.5, z + 0.36, x + 1.24, y + 0.6, z + 0.6, M.HIE2)
+
+
+def lingotes(o, x, y, z):
+    for i in range(3):
+        for j in range(3 - i):
+            xx = x + 0.08 + j * 0.28 + i * 0.14
+            o.f(xx, y + i * 0.1, z + 0.1, xx + 0.24, y + i * 0.1 + 0.1, z + 0.5, (170, 120, 90) if (i + j) % 2 else (150, 154, 166))
+
+
+def herreria():
+    W, D = 22, 18
+    o = Obra("cw_herreria", W, 26, D,
+             "Herreria semiabierta (progreso: forjar y mejorar armas). Frente y lado este abiertos con pilares; fragua de piedra "
+             "con brasas, campana y chimenea, fuelle de cuero, yunque sobre tocon con martillo, tina de temple, piedra de afilar, "
+             "carbonera, lingotes, tabla de herramientas (martillos, tenazas, lima, atizador, herraduras) y armero. Cartel con yunque "
+             "colgado del pilar de la entrada.",
+             entry=(10, 0, "norte"))
+    acera(o, 0, 0, W - 1, D - 1)
+    c = Casa(o, 3, 4, 18, 13, teja="techo_oscuro")      # interior x 4..17, z 5..12
+    s = c.suelos[0]
+    c.abrir("n", 1, 15, 0, cada=5)
+    c.abrir("e", 1, 9, 0, cada=4)
+    c.cartel_colgante("n", 1.5, s + 3, "yunque")
+    # fragua contra el fondo oeste
+    o.mbox(4, s, 11, 6, s, 12, "chimenea")
+    o.f(3.9, s + 1, 10.85, 7.1, s + 1.25, 13, PIEDRA_F)
+    for i in range(12):
+        xx, zz = 4.2 + (i % 4) * 0.65, 11.1 + (i // 4) * 0.55
+        o.f(xx, s + 1.25, zz, xx + 0.45, s + 1.35 + (i % 3) * 0.05, zz + 0.4, (255, 120 + (i % 3) * 40, 40), 0, 1)
+    o.f(4.6, s + 1.4, 11.6, 6.2, s + 1.45, 11.7, (255, 210, 120), 0, 1)        # barra al rojo
+    o.f(6.2, s + 1.35, 11.6, 7.4, s + 1.43, 11.7, M.HIE2)
+    o.f(3.8, s + 2.6, 10.3, 7.2, s + 2.85, 13, PIEDRA_F)                       # campana
+    o.f(4.0, s + 2.85, 10.6, 7.0, s + 3.0, 13, (140, 136, 128))
+    for y in range(s + 3, c.cumbre + 2):
+        o.mbox(4, y, 11, 6, y, 12, "chimenea")
+    o.f(3.8, c.cumbre + 2, 10.8, 7.2, c.cumbre + 2.22, 13.2, PIEDRA_F)
+    o.f(4.4, c.cumbre + 2.22, 11.4, 6.6, c.cumbre + 2.26, 12.6, (30, 26, 24))
+    for xx in (3.9, 6.95):
+        o.f(xx, s + 1.25, 10.85, xx + 0.15, s + 2.6, 11.0, (120, 116, 110))
+    c.fuegos.append((5.5, 11.8, s, 2.5))
+    c.reservar(4, 8.6, 7, 10.8, s, s + 2, "paso", "frente de la fragua")
+    c.ocupa("fuelle", 7.2, 11.0, 9.0, 12.6, s, s + 1.0, False)
+    fuelle(o, 7.5, s, 11.2)
+    c.mueble(135, 8, s, 7.5, 0, "yunque")
+    o.f(8.9, s + 1.075, 7.62, 9.55, s + 1.14, 7.68, M.MADC)
+    o.f(9.55, s + 1.06, 7.55, 9.75, s + 1.2, 7.75, M.HIE2)
+    lingotes(o, 10.2, s, 7.6); c.ocupa("lingotes", 10.2, 7.6, 11.1, 8.2, s, s + 0.3, False)
+    tina_temple(o, c, 10.4, s, 11.6)
+    piedra_afilar(o, c, 13, s, 11.6)
+    carbonera(o, c, 4.2, s, 5.4)
+    g = M.panel_herramientas(o, c.caras["s"], 9.6, 13.6, s + 2.2)
+    M.martillo(g, 10.0, s + 2.35); M.martillo(g, 10.45, s + 2.4)
+    M.tenazas(g, 11.0, s + 2.25); M.tenazas(g, 11.45, s + 2.3)
+    M.lima(g, 11.95, s + 2.4); M.atizador(g, 12.4, s + 2.1)
+    M.herradura(g, 13.05, s + 3.0); M.herradura(g, 13.05, s + 2.55)
+    armero(o, 14, s, 5.2, 2)
+    c.ocupa("armero", 14, 5.2, 17, 6.2, s, s + 2.7)
+    c.farol_pared("o", 3.0, s + 3.5)
+    return o
+
+
+# ---------------------------------------------------------------- carpinteria
+def virutas(o, x, y, z, ni=6, nk=5, seed=0):
+    v = Vox(0.125)
+    for i in range(ni):
+        for k in range(nk):
+            h = int(2.2 * math.sin((i + 0.5) / ni * math.pi) * math.sin((k + 0.5) / nk * math.pi) + (_h(seed, i, k) % 2) * 0.6)
+            for j in range(h):
+                v.set(i, j, k, ((232, 206, 150), (220, 188, 128), (240, 220, 170))[_h(seed, i, j, k) % 3])
+    for (x0, y0, z0, x1, y1, z1, col, g) in v.cajas():
+        o.f(x + x0, y + y0 * 0.5, z + z0, x + x1, y + y1 * 0.5, z + z1, col)
+
+
+def banco_carpintero(o, c, x0, z0, y, largo=4):
+    """Banco de carpintero (a lo largo de x, contra un muro en +z): tapa gruesa de tablones, patas con travesanos,
+    tornillo de banco con husillo, topes, cajon y herramientas encima (cepillo, formon, mazo, regla)."""
+    c.ocupa("banco de carpintero", x0, z0, x0 + largo, z0 + 1, y, y + 1.4)
+    for i in range(3):
+        o.f(x0, y + 1.0, z0 + i * 0.333 + 0.01, x0 + largo, y + 1.25, z0 + i * 0.333 + 0.323, M.MADCC if i % 2 else M.MADC, 2)
+    for xx in (x0 + 0.15, x0 + largo - 0.35):
+        for zz in (z0 + 0.1, z0 + 0.7):
+            o.f(xx, y, zz, xx + 0.2, y + 1.0, zz + 0.2, M.MADO)
+        o.f(xx, y + 0.25, z0 + 0.3, xx + 0.2, y + 0.37, z0 + 0.7, M.MADO)
+    o.f(x0 + 0.35, y + 0.25, z0 + 0.45, x0 + largo - 0.35, y + 0.37, z0 + 0.55, M.MADO)
+    o.f(x0 + 0.4, y + 0.37, z0 + 0.15, x0 + largo - 0.4, y + 0.42, z0 + 0.85, M.MAD, 2)          # repisa baja
+    for i in range(4):
+        o.f(x0 + 0.6 + i * 0.7, y + 0.42, z0 + 0.3, x0 + 1.2 + i * 0.7, y + 0.55, z0 + 0.7, (176, 126, 76), 2)
+    o.f(x0 - 0.12, y + 0.7, z0 + 0.25, x0, y + 1.25, z0 + 0.75, M.MAD, 2)                          # tornillo
+    o.f(x0 - 0.3, y + 0.92, z0 + 0.47, x0 - 0.12, y + 1.0, z0 + 0.53, M.HIE2)
+    o.f(x0 - 0.33, y + 0.85, z0 + 0.35, x0 - 0.3, y + 1.07, z0 + 0.65, M.MADO)
+    for xx in (x0 + 1.5, x0 + 2.8):
+        o.f(xx, y + 1.25, z0 + 0.1, xx + 0.1, y + 1.33, z0 + 0.2, M.MADO)
+    o.f(x0 + 0.6, y + 1.25, z0 + 0.35, x0 + 1.1, y + 1.4, z0 + 0.6, M.MAD)                          # cepillo
+    o.f(x0 + 0.68, y + 1.4, z0 + 0.42, x0 + 0.82, y + 1.5, z0 + 0.53, M.MADC)
+    o.f(x0 + 0.95, y + 1.4, z0 + 0.43, x0 + 1.0, y + 1.47, z0 + 0.52, M.ACERO)
+    o.f(x0 + 1.8, y + 1.25, z0 + 0.5, x0 + 2.25, y + 1.3, z0 + 0.56, M.ACERO)                        # formon
+    o.f(x0 + 2.25, y + 1.25, z0 + 0.49, x0 + 2.5, y + 1.32, z0 + 0.57, M.MADC)
+    o.f(x0 + 2.7, y + 1.25, z0 + 0.3, x0 + 2.8, y + 1.33, z0 + 0.8, M.MADC)                          # mazo
+    o.f(x0 + 2.62, y + 1.25, z0 + 0.15, x0 + 2.88, y + 1.45, z0 + 0.32, M.MAD)
+    o.f(x0 + 3.0, y + 1.25, z0 + 0.12, x0 + 3.9, y + 1.27, z0 + 0.2, (220, 200, 140))                # regla
+    o.box(int(x0), y, int(z0), int(x0 + largo) - 1, y, int(z0), COL_INV)
+
+
+def caballetes_tronco(o, c, x0, z0, y):
+    """Dos caballetes en A con un tronco descortezado a medias y un serrucho clavado en el corte."""
+    c.ocupa("caballetes con tronco", x0, z0, x0 + 3.5, z0 + 1, y, y + 1.6)
+    for xx in (x0 + 0.3, x0 + 2.8):
+        o.f(xx, y + 0.8, z0 + 0.05, xx + 0.4, y + 0.95, z0 + 0.95, M.MAD)
+        for zz in (z0 + 0.1, z0 + 0.75):
+            o.f(xx + 0.13, y, zz, xx + 0.27, y + 0.8, zz + 0.15, M.MADO)
+        o.f(xx + 0.15, y + 0.3, z0 + 0.25, xx + 0.25, y + 0.4, z0 + 0.75, M.MADO)
+    o.f(x0, y + 0.95, z0 + 0.2, x0 + 3.5, y + 1.5, z0 + 0.8, (104, 72, 44))
+    o.f(x0 + 1.6, y + 0.97, z0 + 0.18, x0 + 3.5, y + 1.52, z0 + 0.82, (196, 160, 112))
+    o.f(x0 - 0.02, y + 1.0, z0 + 0.25, x0, y + 1.45, z0 + 0.75, (210, 176, 128))
+    o.f(x0 - 0.03, y + 1.15, z0 + 0.4, x0 - 0.02, y + 1.3, z0 + 0.6, (176, 136, 90))
+    o.f(x0 + 2.45, y + 1.3, z0 + 0.47, x0 + 2.5, y + 1.95, z0 + 0.53, M.ACERO)
+    o.f(x0 + 2.45, y + 1.95, z0 + 0.4, x0 + 2.5, y + 2.15, z0 + 0.6, M.MADC)
+    o.put(int(x0), y, int(z0), COL_INV); o.put(int(x0) + 3, y, int(z0), COL_INV)
+
+
+def tablas_de_pie(o, c, x0, z0, y, n=7):
+    """Tablas y listones de pie contra el muro (+z), de distintas alturas y tonos."""
+    c.ocupa("tablas de pie", x0, z0, x0 + n * 0.3 + 0.2, z0 + 0.6, y, y + 3.2)
+    o.f(x0, y + 2.4, z0 + 0.45, x0 + n * 0.3 + 0.2, y + 2.5, z0 + 0.55, M.MADO)
+    for i in range(n):
+        h = 2.2 + (_h(i, 3) % 5) * 0.2
+        w = 0.22 if i % 3 else 0.12
+        col = ((176, 126, 76), (160, 112, 66), (190, 140, 90))[i % 3]
+        o.f(x0 + 0.1 + i * 0.3, y, z0 + 0.1 + (i % 2) * 0.08, x0 + 0.1 + i * 0.3 + w, y + h, z0 + 0.4 + (i % 2) * 0.08, col, 2)
+
+
+def silla_a_medias(o, x, y, z):
+    """Silla sin terminar (asiento y dos patas puestas, el respaldo apoyado en el suelo)."""
+    o.f(x + 0.125, y + 0.625, z + 0.125, x + 0.875, y + 0.75, z + 0.875, M.MADCC, 2)
+    for (xx, zz) in ((0.125, 0.125), (0.75, 0.75)):
+        o.f(x + xx, y, z + zz, x + xx + 0.125, y + 0.625, z + zz + 0.125, M.MAD)
+    o.f(x + 0.4, y + 0.3, z + 0.4, x + 0.55, y + 0.625, z + 0.55, M.MADO)
+    o.f(x + 1.1, y, z + 0.2, x + 1.9, y + 0.12, z + 0.9, M.MAD)
+    for xx in (1.2, 1.45, 1.7):
+        o.f(x + xx, y + 0.12, z + 0.3, x + xx + 0.08, y + 0.16, z + 0.8, M.MADC)
+
+
+def barril_en_obra(o, x, y, z):
+    """Barril a medio armar: aro de hierro, la mitad de las duelas puestas y otras apoyadas al lado."""
+    v = Vox(0.125)
+    for j in range(10):
+        for i in range(8):
+            for k in range(8):
+                d = math.hypot(i - 3.5, k - 3.5)
+                if 2.9 <= d < 3.9:
+                    a = math.atan2(k - 3.5, i - 3.5)
+                    if a < 0.6 or j in (1, 8):
+                        v.set(i, j, k, M.HIE2 if j in (1, 8) else (M.MAD if int(a * 3) % 2 else (126, 84, 50)))
+    v.poner(o, x, y, z, 2)
+    for i in range(3):
+        o.f(x + 1.1 + i * 0.16, y, z + 0.1, x + 1.22 + i * 0.16, y + 1.1 - i * 0.1, z + 0.35, (150, 100, 60))
+
+
+def carpinteria():
+    W, D = 22, 18
+    o = Obra("cw_carpinteria", W, 26, D,
+             "Carpinteria semiabierta (progreso: muebles, arcos, mejoras de casa). Frente abierto con pilares; banco de carpintero "
+             "con tornillo y herramientas, caballetes con tronco a medio descortezar, tablas de pie, pilas de tablones, silla y barril "
+             "a medio armar, virutas, tabla de herramientas (serrucho, escuadra, formones, martillo, hacha), troncos afuera. "
+             "Cartel con sierra colgado del pilar de la entrada.",
+             entry=(10, 0, "norte"))
+    acera(o, 0, 0, W - 1, D - 1)
+    c = Casa(o, 3, 4, 18, 13, muro="muro_ocre", teja="techo_rojo")       # interior x 4..17, z 5..12
+    s = c.suelos[0]
+    c.abrir("n", 1, 15, 0, cada=5)
+    c.ventana("e", 3); c.ventana("o", 5)
+    c.cartel_colgante("n", 1.5, s + 3, "sierra")
+    banco_carpintero(o, c, 5, 11.6, s, 4)
+    virutas(o, 6.0, s, 10.6, 8, 5, 1)
+    g = M.panel_herramientas(o, c.caras["s"], 1.6, 5.0, s + 2.3)
+    M.sierra(g, 1.8, s + 2.9); M.escuadra(g, 2.8, s + 2.45)
+    M.formon(g, 3.4, s + 2.5); M.formon(g, 3.65, s + 2.55); M.martillo(g, 4.1, s + 2.4); M.hacha(g, 4.6, s + 2.35)
+    caballetes_tronco(o, c, 10.5, 8.2, s)
+    virutas(o, 11.5, s, 9.3, 6, 4, 2)
+    tablas_de_pie(o, c, 10.4, 12.3, s, 8)
+    c.mueble(161, 14.6, s, 11.9, 0, "pila de lena")
+    silla_a_medias(o, 14.4, s, 6.0); c.ocupa("silla a medias", 14.4, 6.0, 16.4, 7.0, s, s + 0.8)
+    barril_en_obra(o, 4.4, s, 7.2); c.ocupa("barril a medias", 4.4, 7.2, 6.0, 8.2, s, s + 1.3)
+    c.mueble(122, 15.8, s, 9, 3, "caja de herramientas")
+    for (xx, zz) in ((20.1, 6), (20.9, 6), (20.5, 6.6)):        # troncos afuera, apilados contra el muro este
+        yy = 1 if xx != 20.5 else 1.6
+        o.f(xx, yy, zz, xx + 0.6, yy + 0.6, zz + 2.6, (104, 72, 44))
+        o.f(xx + 0.05, yy + 0.05, zz - 0.02, xx + 0.55, yy + 0.55, zz, (200, 166, 116))
+        o.f(xx + 0.2, yy + 0.2, zz - 0.03, xx + 0.4, yy + 0.4, zz - 0.02, (170, 130, 86))
+    c.farol_pared("e", 7.0, s + 3.5); c.farol_pared("o", 7.6, s + 3.5)
+    return o
+
+
+# ---------------------------------------------------------------- pabellon de entrenamiento (cuerpo a cuerpo)
+def pabellon_entrenamiento():
+    W, D = 28, 24
+    o = Obra("cw_pabellon_entrenamiento", W, 20, D,
+             "Pabellon de entrenamiento cuerpo a cuerpo. Plataforma con suelo de losas grandes de dos tonos y ruedo central de arena "
+             "con bordillo de madera; 10 columnas de piedra con capitel, arquitrabe y techo escalonado, estandartes entre columnas. "
+             "Seis munecos de practica (con casco o escudo), dos armeros, banco y barril de agua. La punteria va en cw_campo_tiro.",
+             entry=(13, 0, "norte"))
+    acera(o, 0, 0, W - 1, D - 1)
+    o.mbox(2, 1, 3, 25, 2, 20, "zocalo")
+    o.mbox(10, 1, 2, 17, 1, 2, "piedra")
+    y = 3
+    cxr, czr, R = 14.0, 11.5, 4.6
+    for i in range(3, 25, 2):
+        for k in range(4, 20, 2):
+            d = math.hypot(i + 1 - cxr, k + 1 - czr)
+            if d < R - 0.2:
+                continue
+            t = _h(i // 2, k // 2) % 3
+            col = ((176, 170, 156), (160, 154, 140), (188, 182, 168))[t]
+            o.f(i + 0.03, y - 0.06, k + 0.03, i + 1.97, y, k + 1.97, col)
+    v = Vox(0.25)
+    for i in range(-20, 20):
+        for k in range(-20, 20):
+            d = math.hypot((i + 0.5) * 0.25, (k + 0.5) * 0.25)
+            if d < R - 0.25:
+                v.set(i, 0, k, ((214, 190, 140), (204, 180, 130), (222, 200, 150))[_h(i, k) % 3])
+            elif d < R + 0.25:
+                v.set(i, 0, k, M.MADO); v.set(i, 1, k, M.MAD)
+    for (x0, y0, z0, x1, y1, z1, col, g) in v.cajas():
+        o.f(cxr + x0, y - 0.06 + y0 * 0.5, czr + z0, cxr + x1, y - 0.06 + y1 * 0.5, czr + z1, col)
+    cols = [(3, 4), (9, 4), (17, 4), (23, 4), (3, 18), (9, 18), (17, 18), (23, 18), (3, 11), (23, 11)]
+    for (cx, cz) in cols:
+        o.mbox(cx, y, cz, cx + 1, y + 6, cz + 1, "pilar")
+        o.f(cx - 0.2, y, cz - 0.2, cx + 2.2, y + 0.3, cz + 2.2, PIEDRA_F)
+        o.f(cx - 0.12, y + 0.3, cz - 0.12, cx + 2.12, y + 0.42, cz + 2.12, (164, 160, 150))
+        o.f(cx - 0.25, y + 6.6, cz - 0.25, cx + 2.25, y + 7.0, cz + 2.25, PIEDRA_F)
+        o.f(cx - 0.12, y + 6.45, cz - 0.12, cx + 2.12, y + 6.6, cz + 2.12, (164, 160, 150))
+    yt = y + 7
+    o.f(2.8, yt, 3.8, 25.2, yt + 0.8, 6.2, M.MADO, 2)
+    o.f(2.8, yt, 17.8, 25.2, yt + 0.8, 20.2, M.MADO, 2)
+    o.f(2.8, yt, 6.2, 5.2, yt + 0.8, 17.8, M.MADO, 2)
+    o.f(22.8, yt, 6.2, 25.2, yt + 0.8, 17.8, M.MADO, 2)
+    for xx in range(7, 23, 4):
+        o.f(xx, yt + 0.2, 6.2, xx + 0.6, yt + 0.8, 17.8, M.MAD, 2)
+    yr = yt + 1
+    o.f(5.2, yr - 0.03, 6.2, 22.8, yr, 17.8, (110, 76, 50), 2)
+    for k, (a0, a1, b0, b1) in enumerate(((2, 25, 3, 20), (4, 23, 5, 18), (6, 21, 7, 16), (8, 19, 9, 14))):
+        o.mbox(a0, yr + k, b0, a1, yr + k, b1, "techo")
+    for xa in (5.4, 19.4):          # estandartes en el frente, entre columnas
+        o.f(xa, yt - 0.1, 3.82, xa + 3.2, yt, 3.9, M.MADO)
+        o.f(xa + 0.3, yt - 3.2, 3.84, xa + 2.9, yt - 0.1, 3.88, (130, 34, 44))
+        o.f(xa + 0.3, yt - 3.6, 3.84, xa + 1.5, yt - 3.2, 3.88, (130, 34, 44))
+        o.f(xa + 1.7, yt - 3.6, 3.84, xa + 2.9, yt - 3.2, 3.88, (130, 34, 44))
+        o.f(xa + 0.9, yt - 2.4, 3.8, xa + 2.3, yt - 1.0, 3.84, M.ORO)
+        o.f(xa + 1.45, yt - 2.6, 3.79, xa + 1.75, yt - 0.8, 3.8, (230, 232, 240))
+        o.f(xa + 1.1, yt - 1.4, 3.79, xa + 2.1, yt - 1.25, 3.8, (230, 232, 240))
+    for n, (mx, mz) in enumerate(((7, 8.5), (7, 14), (20, 8.5), (20, 14), (11.5, 17.2), (16, 17.2))):
+        rot = 3 if mx < 10 else (1 if mx > 18 else 0)
+        o.f(mx - 0.4, y, mz - 0.4, mx + 1.4, y + 0.04, mz + 1.4, PAJA2)
+        muneco(o, mx, y, mz, rot, casco=(n % 3 == 0), escudo=(n % 3 == 1), k=n)
+    armero(o, 5.5, y, 18.3, 2)
+    armero(o, 19.5, y, 18.3, 2)
+    o.obj(125, 12.5, y, 5.0, 0)
+    o.obj(128, 18.0, y, 5.0)
+    o.f(18.2, y + 1.32, 5.2, 18.8, y + 1.34, 5.8, (70, 120, 170))
+    o.f(18.6, y + 1.3, 5.3, 18.75, y + 1.5, 5.45, M.MADC)
+    for (fx, fz) in ((8.0, 11.5), (19.9, 11.5)):
+        o.f(fx - 0.02, yt - 1.4, fz - 0.02, fx + 0.02, yt, fz + 0.02, HIERRO2)
+        farol(o, fx, yt - 2.55, fz, 1.0)
+    for (px, pz) in ((1, 1), (25, 1)):
+        farola(o, px, 1, pz)
+    return o
+
+
+# ---------------------------------------------------------------- campo de tiro
+def campo_tiro():
+    W, D = 36, 36
+    o = Obra("cw_campo_tiro", W, 14, D,
+             "Campo de tiro con arco (punteria, separado del pabellon cuerpo a cuerpo). Puesto de tiro techado de madera con "
+             "barandilla, barriles con flechas, arcos colgados y banco; cuatro calles separadas por cuerdas con postes, una diana "
+             "por calle a 10, 14, 18 y 22 bloques, fardos de paja detras como parapeto y banderines de distancia.",
+             entry=(18, 0, "norte"))
+    for x in range(W):
+        for z in range(D):
+            o.mat(x, 0, z, "pasto" if _h(x, z) % 5 else "pasto_os")
+    # puesto de tiro: tarima, postes, techo, baranda delantera
+    o.mbox(4, 1, 2, 31, 1, 6, "madera")
+    o.mbox(15, 1, 0, 20, 1, 1, "piedra")
+    for xx in (4, 13, 22, 31):
+        for zz in (2, 6):
+            o.f(xx + 0.3, 2, zz + 0.3, xx + 0.7, 6.4, zz + 0.7, M.MADO, 2)
+            o.put(xx, 2, zz, COL_INV); o.put(xx, 3, zz, COL_INV)
+    o.f(4.2, 6.4, 2.3, 31.8, 6.7, 2.7, M.MADO, 2); o.f(4.2, 6.4, 6.3, 31.8, 6.7, 6.7, M.MADO, 2)
+    for k, (a0, a1, b0, b1) in enumerate(((3, 32, 1, 7), (3, 32, 3, 5))):
+        o.mbox(a0, 7 + k, b0, a1, 7 + k, b1, "techo")
+    baranda(o, 4.0, 32.0, 6.74, 2, "x", H=1.0)
+    # calles
+    centros = [8.5, 14.5, 21.5, 27.5]
+    for xs in (11.5, 18, 24.5):
+        for zz in range(8, 33, 4):
+            o.f(xs - 0.07, 0.95, zz - 0.07, xs + 0.07, 2.0, zz + 0.07, M.MADO)
+        o.f(xs - 0.02, 1.85, 8, xs + 0.02, 1.9, 32, (210, 190, 140))
+    dist = [10, 14, 18, 22]
+    for n, (cx, dd) in enumerate(zip(centros, dist)):
+        z = 7 + dd
+        diana(o, cx - 1, 1, z, 0, n)
+        for i in range(3):
+            M.fardo(o, cx - 2.25 + i * 1.5, 1, z + 1.4, 0, n * 3 + i)
+        M.fardo(o, cx - 1.5, 1.75, z + 1.4, 0, n * 3 + 7)
+        # banderin de distancia
+        o.f(cx + 1.8, 1, 13, cx + 1.9, 3.2, 13.1, M.MADO)
+        o.f(cx + 1.9, 2.7, 13.04, cx + 2.5, 3.1, 13.07, ((200, 50, 50), (60, 110, 190), (230, 190, 60), (90, 170, 80))[n])
+    # en la tarima
+    carcaj_barril(o, 5.2, 2, 3.0, 1)
+    carcaj_barril(o, 29.8, 2, 3.0, 2)
+    o.obj(125, 16.5, 2, 2.2, 2)
+    for xa in (9.5, 25.5):     # arcos en un tablero de pie
+        o.f(xa, 2, 2.15, xa + 2.0, 4.6, 2.3, M.MAD, 2)
+        for i, xx in enumerate((xa + 0.5, xa + 1.3)):
+            for j in range(12):
+                t = (j - 5.5) / 5.5
+                du = 0.25 * (1 - t * t)
+                o.f(xx + du - 0.03, 2.4 + j * 0.16, 2.3, xx + du + 0.03, 2.56 + j * 0.16, 2.36, M.MADC if 3 < j < 8 else M.MAD)
+            o.f(xx - 0.01, 2.45, 2.3, xx + 0.01, 4.27, 2.31, (230, 226, 210))
+    for (fx, fz) in ((13.5, 6.5), (22.5, 6.5)):
+        o.f(fx - 0.03, 5.3, fz - 0.03, fx + 0.03, 6.4, fz + 0.03, HIERRO2)
+        farol(o, fx, 4.15, fz, 1.0)
+    return o
+
+
+# ---------------------------------------------------------------- casas en hilera (techos a dos aguas, cocinas)
+def casas_hilera():
+    W, D = 45, 19
+    o = Obra("cw_casas_hilera", W, 32, D,
+             "Tres casas en hilera con muro compartido y techo a dos aguas (cumbrera paralela a la calle): ocre de 2 plantas con "
+             "cocina de hogar (olla colgada, encimera, repisa de platos, ollas, ristras) y dormitorio arriba; rosa de 2 plantas mas alta "
+             "con cocina de hierro y cuarto de ninos; una de 1 planta con hogar-cocina y cama. Hastiales de muro, sillares solo donde "
+             "la casa queda a la vista, cornisas a distinta altura.",
+             entry=(9, 0, "norte"))
+    acera(o, 0, 0, W - 1, D - 1)
+    # C: 1 planta (x 29..42) -- primero las bajas
+    C = Casa(o, 29, 4, 42, 15, pisos=1, muro="muro", teja="techo", techo_tipo="dos", alero_o=False, alero_e=True,
+             esquinas=["ne", "se"], cornisa=False)
+    # A: ocre 2 plantas (x 2..15)
+    A = Casa(o, 2, 4, 15, 15, pisos=2, h=7, muro="muro_ocre", teja="techo", techo_tipo="dos", alero_o=True, alero_e=False,
+             esquinas=["no", "so"], cornisa=["n", "s", "o"])
+    # B: rosa 2 plantas mas alta (x 15..29), la ultima: sus muros compartidos suben por encima de las vecinas
+    B = Casa(o, 15, 4, 29, 15, pisos=2, h=8, muro="muro_rosa", teja="techo_rojo", techo_tipo="dos", alero_o=False, alero_e=False,
+             esquinas={"no": A.cumbre + 1, "so": A.cumbre + 1, "ne": C.cumbre + 1, "se": C.cumbre + 1}, cornisa=["n", "s"])
+    for c in (A, B, C):
+        o.mbox(c.x0 + 1, 1, c.z0 + 1, c.x1 - 1, 2, c.z1 - 1, "piso")
+    # ---- A: cocina de hogar abajo, dormitorio arriba
+    s, s2 = A.suelos
+    A.puerta("n", 6)                                     # x 8..9
+    A.ventana("n", 1); A.ventana("n", 11)
+    A.ventana("n", 1, 1); A.ventana("n", 11, 1)
+    A.ventana("s", 3, 1); A.ventana("s", 9, 1)
+    A.ventana("o", 2, 1)
+    A.chimenea("o", 6, olla=True)                        # hogar en z 10..11
+    A.farol_pared("n", 4.4, s + 1, interior=False); A.farol_pared("n", 9.6, s + 1, interior=False)
+    A.enredadera("o", 8.6, s - 1, s2 + 5, 2.0)
+    escalera(A, 6, 13, 14, 0, 1)                         # x 6..13 por el fondo
+    _encimera_rot(o, 13, s, 5, 3, 3, A, "encimera")
+    _repisa_e(o, A, 2.2, s + 2.6, 2.4)
+    M.ollas_colgadas(o, A.caras["e"], 4.8, s + 3.6, 2)
+    M.ristra(o, A.caras["n"], 4.6, s + 3.4); M.ristra(o, A.caras["n"], 5.0, s + 3.3, (200, 120, 80))
+    A.mueble(124, 7, s, 10, 0, "mesa de cocina")
+    A.mueble(131, 7, s, 9, 2, "silla"); A.mueble(131, 8, s, 9, 2, "silla")
+    A.mueble(131, 7, s, 11, 0, "silla"); A.mueble(131, 8, s, 11, 0, "silla")
+    A.mueble(128, 3, s, 5, 0, "barril"); A.mueble(129, 4, s, 5, 0, "saco"); A.mueble(129, 3, s, 6.1, 0, "saco")
+    A.farol_pared("e", 6.5, s + 3.5)
+    A.alfombra(5.5, 6, 10.5, 11.5, 1, AZUL, CELESTE, 0.5)
+    A.cama_con_cofre(3.5, s2, 5, 2)
+    A.mueble(133, 14, s2, 6, 3, "armario")
+    A.farol_pared("o", 5.0, s2 + 3.5)
+    # ---- B: cocina de hierro abajo, cuarto de ninos arriba
+    s, s2 = B.suelos
+    B.puerta("n", 6)                                     # x 21..22
+    for p in (0, 1):
+        B.ventana("n", 1, p); B.ventana("n", 11, p)
+    B.ventana("n", 6, 1)
+    B.ventana("s", 6, 1)
+    B.farol_pared("n", 4.4, s + 1, interior=False); B.farol_pared("n", 9.6, s + 1, interior=False)
+    escalera(B, 18, 13, 14, 0, 1)                        # x 18..26
+    _fogon_e(o, B, 27, s, 6)
+    _encimera_rot(o, 27, s, 9, 3, 3, B, "encimera")
+    B.mueble(124, 21, s, 10, 0, "mesa"); B.mueble(131, 21, s, 9, 2, "silla"); B.mueble(131, 22, s, 11, 0, "silla")
+    B.mueble(127, 16, s, 7, 1, "estanteria de despensa")
+    _repisa_e(o, B, 4.6, s + 3.0, 2.2)
+    B.alfombra(20, 6, 25, 10.5, 1, ROJO, ORO, 0.5)
+    B.cama_con_cofre(16.5, s2, 5, 2)
+    B.cama_con_cofre(26.0, s2, 5, 2)
+    B.mueble(127, 16, s2, 10, 1, "estanteria")
+    B.farol_pared("s", 3.0, s2 + 3.6)
+    # ---- C: una planta: hogar-cocina y cama
+    s = C.suelos[0]
+    C.puerta("n", 6)                                     # x 35..36
+    C.ventana("n", 1); C.ventana("n", 11)
+    C.ventana("s", 6)
+    C.chimenea("e", 5, olla=True)                        # z 9..10
+    C.farol_pared("n", 4.4, s + 1, interior=False); C.farol_pared("n", 9.6, s + 1, interior=False)
+    C.enredadera("s", 10.5, s - 1, C.roof_y - 0.3, 2.0)
+    C.cama_con_cofre(30.5, s, 10, 0)
+    C.mueble(124, 34, s, 9, 0, "mesa"); C.mueble(131, 34.5, s, 8, 2, "silla"); C.mueble(131, 34.5, s, 10, 0, "silla")
+    _encimera_rot(o, 36, s, 14, 3, 2, C, "encimera")
+    C.mueble(128, 41, s, 13, 0, "barril")
+    C.farol_pared("o", 2.5, s + 3.5)
+    afuera(B, "banco", 16.0, 1.4, 19.0, 2.4, 1, 2, 125, 16.0, 1, 1.4)
+    return o
+
+
+def _cara_int(c, cara):
+    return c.caras[cara]
+
+
+def _encimera_rot(o, x, y, z, largo, rot, casa, nombre):
+    """Encimera girada: rot 0 frente -Z, 2 frente +Z, 1 frente +X, 3 frente -X. (x, z) = esquina minima de la huella."""
+    w, d = (largo, 1) if rot % 2 == 0 else (1, largo)
+    casa.ocupa(nombre, x, z, x + w, z + d, y, y + 1.3)
+    p = Pieza(largo, 1)
+    tmp = _Captura()
+    M.encimera(tmp, 0, 0, 0, largo)
+    for b in tmp.cajas:
+        p.f(*b)
+    p.poner(o, x, y, z, rot)
+    for i in range(w):
+        for k in range(d):
+            o.put(int(x) + i, y, int(z) + k, COL_INV)
+
+
+class _Captura:
+    """Obra falsa que junta cajas (para girar piezas armadas con o.f)."""
+    def __init__(self):
+        self.cajas = []
+
+    def f(self, x0, y0, z0, x1, y1, z1, col, pat=0, glow=0):
+        self.cajas.append((x0, y0, z0, x1, y1, z1, col, pat, glow))
+
+    def box(self, *a):
+        pass
+
+    def put(self, *a):
+        pass
+
+
+def _fogon_e(o, casa, x, y, z):
+    """Cocina de hierro contra el muro este (frente -X)."""
+    casa.ocupa("cocina de hierro", x, z, x + 1, z + 2, y, y + 1.3, False)
+    tmp = _Captura()
+    M.fogon(tmp, 0, 0, 0)
+    p = Pieza(2, 1)
+    for b in tmp.cajas:
+        p.f(*b)
+    p.poner(o, x, y, z, 3)
+    o.put(int(x), y, int(z), COL_INV); o.put(int(x), y, int(z) + 1, COL_INV)
+    casa.fuegos.append((x + 0.5, z + 1.0, y, 1.2))
+
+
+def _repisa_e(o, casa, u, v, largo):
+    M.repisa_platos(o, casa.caras["e"], u, v, largo)
+    x0, z0, x1, z1 = casa.rect("e", u, -1.0, u + largo, -1.5)
+    casa.ocupa("repisa", x0, z0, x1, z1, v - 0.4, v + 0.5, True)
+
+
+# ---------------------------------------------------------------- torre de vigia / campanario (simetrica, escalas de mano)
+def torre_vigia():
+    W, D = 14, 14
+    o = Obra("cw_torre_vigia", W, 40, D,
+             "Torre de vigia / campanario de 3 plantas (8x8), simetrica: puerta y ventanas de 2 centradas en cada cara, "
+             "escaleras de mano abiertas con baranda entre plantas, ultima planta abierta con pilares y pretil, campana de bronce "
+             "centrada, aguja y veleta.",
+             entry=(6, 13, "sur"))
+    acera(o, 0, 0, W - 1, D - 1)
+    c = Casa(o, 3, 3, 10, 10, pisos=3)              # interior x 4..9, z 4..9
+    s0, s1, s2 = c.suelos
+    c.puerta("s", 3)                                # x 6..7
+    for p in (0, 1):
+        for cn in ("n", "e", "o"):
+            c.ventana(cn, 3, p, flores=False)
+    c.ventana("s", 3, 1, flores=False)
+    escalera_mano(c, 9, 4, 0, "e")
+    escalera_mano(c, 4, 9, 1, "o")
+    for cn in ("n", "s", "e", "o"):
+        c.abrir(cn, 1, 7, 2, cada=5, viga=False)
+        for u in range(2, 6):
+            x, y, z = c.celda(cn, u, s2)
+            o.mat(x, y, z, c.muro)
+        c.o.fc(c.caras[cn], 1.0, s2 + 1, -1.0, 7.0, s2 + 1.15, 0.12, PIEDRA_F)
+    for y in range(c.cumbre + 1, c.cumbre + 4):
+        o.mbox(6, y, 6, 7, y, 7, "techo")
+    t = c.cumbre + 4
+    o.f(6.85, t, 6.85, 7.15, t + 1.4, 7.15, BRONCE)
+    o.f(6.2, t + 1.0, 6.95, 7.8, t + 1.1, 7.05, BRONCE)
+    o.f(7.4, t + 0.8, 6.98, 7.9, t + 1.2, 7.02, BRONCE)
+    o.f(3.5, c.roof_y - 0.7, 6.7, 10.5, c.roof_y - 0.2, 7.3, M.MADO, 2)
+    campana(o, 7.0, c.roof_y - 0.7, 7.0)
+    c.mueble(128, 4, s0, 4, 0, "barril"); c.mueble(129, 5, s0, 4, 0, "saco")
+    c.farol_pared("o", 1.5, s0 + 3.5); c.farol_pared("e", 6.5, s1 + 3.5)
+    return o
+
+
+# ---------------------------------------------------------------- granero y establo
+def granero_establo():
+    W, D = 30, 22
+    o = Obra("cw_granero_establo", W, 26, D,
+             "Granero y establo (progreso: monturas). Muros de tablas con sillares, porton de 4x4, cinco boxes con divisiones, "
+             "paja tupida en el suelo de cada box, comedero y balde; fardos apilados, sillas de montar colgadas, horquilla; "
+             "carreta con ruedas de rayos afuera.",
+             entry=(14, 0, "norte"))
+    acera(o, 0, 0, W - 1, D - 1)
+    c = Casa(o, 3, 4, 24, 17, pisos=1, h=8, muro="madera_pared", teja="techo_rojo")   # interior x 4..23, z 5..16
+    s = c.suelos[0]
+    c.puerta("n", 9, w=4, h=4)                      # x 12..15
+    c.ventana("n", 3, flores=False); c.ventana("n", 17, flores=False)
+    c.ventana("o", 3, flores=False); c.ventana("e", 3, flores=False)
+    for b in (8, 12, 16, 20):
+        o.f(b - 0.1, s, 12, b + 0.1, s + 1.6, 17, (150, 104, 62), 2)
+        o.f(b - 0.15, s + 1.6, 12, b + 0.15, s + 1.75, 17, M.MADO, 2)
+    for i, b in enumerate((4, 8, 12, 16, 20)):
+        c.ocupa("box %d" % (i + 1), b, 12, b + 4, 17, s, s + 1.8, True, choca=False)
+        x0 = b + 0.1 if b > 4 else b
+        x1 = b + 3.9 if b < 20 else b + 4
+        for yy in (0.6, 1.25):
+            o.f(x0, s + yy, 11.9, x0 + 1.2, s + yy + 0.15, 12.1, M.MAD, 2)
+            o.f(x1 - 1.2, s + yy, 11.9, x1, s + yy + 0.15, 12.1, M.MAD, 2)
+        o.f(x0 + 1.2, s, 11.85, x0 + 1.4, s + 1.6, 12.15, M.MADO)
+        o.f(x1 - 1.4, s, 11.85, x1 - 1.2, s + 1.6, 12.15, M.MADO)
+        for xx in (x0, x1 - 1):
+            o.put(int(xx), s, 12, COL_INV); o.put(int(xx), s + 1, 12, COL_INV)
+        M.heno_suelo(o, x0 + 0.15, 12.2, x1 - 0.15, 16.2, s, seed=i * 7 + 1, densidad=0.9)
+        o.f(b + 0.8, s, 16.3, b + 3.2, s + 0.8, 16.95, (124, 84, 52), 2)
+        o.f(b + 0.9, s + 0.65, 16.4, b + 3.1, s + 0.75, 16.85, (120, 160, 70))
+        v = Vox(0.0625)
+        torno(v, 4.0, 4.0, 0, [3.2, 3.4, 3.6, 3.7, 3.8, 3.9, 3.9], lambda a, t, bb: ((70, 120, 170) if t == 6 and not bb else (M.HIE2 if t in (1, 5) else M.MAD)))
+        v.poner(o, b + 3.15, s, 13.0)
+    M.heno_suelo(o, 4.2, 5.2, 11.5, 11.4, s, seed=99, densidad=0.35)
+    for (x, z, y, sd) in ((4.2, 5.2, s, 1), (4.2, 6.0, s, 2), (5.7, 5.2, s, 3), (4.2, 5.6, s + 0.75, 4), (5.7, 5.6, s + 0.75, 5)):
+        M.fardo(o, x, y, z, 0, sd)
+    c.ocupa("fardos", 4.2, 5.2, 7.2, 6.8, s, s + 1.5, True)
+    for (x, z, y, sd) in ((20.3, 5.2, s, 7), (21.8, 5.2, s, 8), (21.0, 5.2, s + 0.75, 9)):
+        M.fardo(o, x, y, z, 0, sd)
+    c.ocupa("fardos", 20.3, 5.2, 23.3, 6.0, s, s + 1.5, True)
+    o.f(16.25, s, 11.6, 16.32, s + 2.0, 11.68, M.MADC)
+    for dx in (-0.12, 0.0, 0.12):
+        o.f(16.26 + dx, s + 2.0, 11.6, 16.3 + dx, s + 2.35, 11.66, HIERRO2)
+    o.f(16.14, s + 1.98, 11.6, 16.44, s + 2.03, 11.66, HIERRO2)
+    ce = c.caras["e"]
+    montura(o, ce, c, 2.5, s + 2.2); montura(o, ce, c, 4.5, s + 2.2)
+    c.ocupa("sillas de montar", 22, 6.5, 23.0, 9.5, s + 1.8, s + 3.2, True)
+    c.farol_pared("o", 8.0, s + 4); c.farol_pared("s", 10.5, s + 4.5)
+    o.obj(1016, 25.6, 1, 7.0, 0)
+    for (x, z, sd) in ((25.6, 12.2, 11), (25.6, 13.0, 12)):
+        M.fardo(o, x, 1, z, 1, sd)
+    return o
+
+
+# ---------------------------------------------------------------- torre arcana (escalas de mano)
 def torre_arcana():
     W, D = 16, 16
     o = Obra("cw_torre_arcana", W, 46, D,
              "Torre arcana de 3 plantas (progreso: encantar equipo). Planta baja con circulo de runas y mesa de encantamientos "
-             "(libro abierto y cristales flotantes), estanterias y cristales; primera planta biblioteca; ultima observatorio con "
-             "telescopio. Escalera de piedra pegada a los muros, techo morado con aguja y orbe brillante.",
+             "(libro abierto y cristales flotantes) al centro y cristales en la esquina; primera planta biblioteca con estanterias, "
+             "mesa de lectura y candelabro; ultima observatorio con telescopio y mesa de cartas. Escaleras de mano abiertas con "
+             "baranda en esquinas opuestas; techo morado con aguja y orbe.",
              entry=(7, 0, "norte"))
     acera(o, 0, 0, W - 1, D - 1)
     c = Casa(o, 3, 3, 12, 12, pisos=3, muro="muro_blanco", teja="techo_morado")   # interior x 4..11, z 4..11
@@ -824,31 +1228,38 @@ def torre_arcana():
     for p in (0, 1, 2):
         c.ventana("o", 4, p, flores=False)
         c.ventana("s", 4, p, flores=False)
-    for p in (1, 2):
         c.ventana("e", 4, p, flores=False)
-    c.cartel_colgante("n", 1.6, s0 + 3, "libro")
-    escalera_perimetral(c, [(11, 5), (11, 6), (11, 7), (11, 8), (11, 9), (11, 10), (11, 11), (10, 11)], 0, "piedra")
-    escalera_perimetral(c, [(9, 11), (8, 11), (7, 11), (6, 11), (5, 11), (4, 11), (4, 10), (4, 9)], 1, "piedra")
-    # planta baja
-    circulo_runas(o, 7.5, s0 + 0.01, 8.6, 2.1)
-    mesa_encantar(o, c, 7.5, s0, 8.6)
-    c.mueble(127, 4, s0, 4, 1, "estanteria")
+    c.cartel_colgante("n", 2.0, s0 + 3, "libro")
+    escalera_mano(c, 11, 11, 0, "e")
+    escalera_mano(c, 4, 11, 1, "o")
+    circulo_runas(o, 8.0, s0 + 0.01, 8.5, 2.2)
+    mesa_encantar(o, c, 8.0, s0, 8.5)
     cristales(o, 4.1, s0, 10.0); c.ocupa("cristales", 4.1, 10.0, 5.0, 11.0, s0, s0 + 1, False)
-    c.farol_pared("o", 7.6, s0 + 3.5)
+    c.farol_pared("o", 2.6, s0 + 3.5); c.farol_pared("e", 2.6, s0 + 3.5)
     # biblioteca
-    c.mueble(127, 4, s1, 4, 1, "estanteria")
-    c.mueble(124, 6, s1, 7, 0, "mesa de lectura")
-    c.mueble(131, 6.5, s1, 6, 2, "silla")
-    c.mueble(138, 9, s1, 7, 0, "candelabro")
-    o.f(6.3, s1 + 1.3, 7.2, 6.9, s1 + 1.45, 7.7, (90, 50, 120)); o.f(7.0, s1 + 1.3, 7.3, 7.6, s1 + 1.4, 7.8, (40, 90, 70))
-    c.farol_pared("e", 3.5, s1 + 3.5)
+    c.mueble(127, 4, s1, 4, 2, "estanteria")
+    c.mueble(127, 9, s1, 4, 2, "estanteria")
+    c.mueble(124, 7, s1, 8, 0, "mesa de lectura")
+    c.mueble(131, 7.5, s1, 7, 2, "silla")
+    c.mueble(138, 6, s1, 8, 0, "candelabro")
+    o.f(7.3, s1 + 1.3, 8.2, 7.9, s1 + 1.45, 8.7, (90, 50, 120)); o.f(8.1, s1 + 1.3, 8.3, 8.7, s1 + 1.4, 8.8, (40, 90, 70))
+    c.farol_pared("e", 2.6, s1 + 3.5)
     # observatorio
-    telescopio(o, 7.5, s2, 5.5); c.ocupa("telescopio", 7.0, 5.0, 8.0, 6.0, s2, s2 + 2.4, True)
-    c.mueble(124, 6, s2, 8, 0, "mesa de cartas")
-    o.f(6.1, s2 + 1.3, 8.1, 7.9, s2 + 1.32, 8.9, (30, 40, 80))
+    telescopio(o, 8.0, s2, 5.5); c.ocupa("telescopio", 7.5, 5.0, 8.5, 6.0, s2, s2 + 2.4, True)
+    c.mueble(124, 7, s2, 8.5, 0, "mesa de cartas")
+    o.f(7.1, s2 + 1.3, 8.6, 8.9, s2 + 1.32, 9.4, (30, 40, 80))
     for i in range(6):
-        o.f(6.3 + (i * 0.27) % 1.5, s2 + 1.32, 8.25 + (i * 0.19) % 0.55, 6.36 + (i * 0.27) % 1.5, s2 + 1.34, 8.31 + (i * 0.19) % 0.55, (250, 240, 170))
-    # aguja y orbe
+        o.f(7.3 + (i * 0.27) % 1.5, s2 + 1.32, 8.75 + (i * 0.19) % 0.55, 7.36 + (i * 0.27) % 1.5, s2 + 1.34, 8.81 + (i * 0.19) % 0.55, (250, 240, 170))
+    v = Vox(0.0625)
+    torno(v, 4.0, 4.0, 0, [1, 1.5, 1, 0.6], lambda a, t, b: M.HIE2, hueco=False)
+    for j in range(8):
+        r = 3.6 * math.sin((j + 0.5) / 8 * math.pi)
+        for i in range(8):
+            for k in range(8):
+                if math.hypot(i - 3.5, k - 3.5) < r and math.hypot(i - 3.5, k - 3.5) > r - 1.2:
+                    v.set(i, 4 + j, k, (60, 110, 180) if (_h(i, j, k) % 3) else (90, 160, 80))
+    v.poner(o, 10.3, s2, 9.7)
+    c.ocupa("globo", 10.3, 9.7, 10.8, 10.2, s2, s2 + 0.8, True)
     for y in range(c.cumbre + 1, c.cumbre + 5):
         o.mbox(7, y, 7, 8, y, 8, "techo_morado")
     t = c.cumbre + 5
@@ -857,5 +1268,5 @@ def torre_arcana():
     return o
 
 
-TODOS = [tienda_pociones, herreria, carpinteria, pabellon_entrenamiento, casas_hilera, posada_balcon, pozo,
+TODOS = [tienda_pociones, herreria, carpinteria, pabellon_entrenamiento, campo_tiro, casas_hilera, posada_balcon, pozo,
          torre_vigia, granero_establo, muro_porton, puente_piedra, torre_arcana]

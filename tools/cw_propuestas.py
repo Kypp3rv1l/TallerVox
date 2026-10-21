@@ -1,4 +1,4 @@
-# Farlands Taller v0.1.7 - propuestas estilo Cube World (Thalmor City). Genera catalogo/estructuras/cw_*.json
+# Farlands Taller v0.1.8 - propuestas estilo Cube World (Thalmor City). Genera catalogo/estructuras/cw_*.json
 # Uso: python tools/cw_propuestas.py [carpeta_salida]
 # Cada casa pasa por Casa.revisar(): si un mueble pisa el paso de una puerta o escalera, queda pegado al fuego
 # o algo tapa una ventana por fuera, el generador se detiene y dice que fallo.
@@ -75,7 +75,7 @@ def casa_2_plantas():
         c.ventana("n", 1, p); c.ventana("n", 11, p)
         c.ventana("e", 5, p)
     c.ventana("s", 6, 1)
-    c.chimenea("o", 5)                     # hogar en z 9..10
+    c.chimenea("o", 5, olla=True)          # hogar en z 9..10
     c.enredadera("n", 13.3, s - 1, s2 + 3)
     c.farol_pared("n", 4.4, s + 1, interior=False); c.farol_pared("n", 9.6, s + 1, interior=False)
     # planta baja
