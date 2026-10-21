@@ -1,6 +1,6 @@
 # Reglas de las casas
 
-## Estilo Cube World (v0.1.5, vigente)
+## Estilo Cube World (v0.1.6, vigente)
 
 Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el personaje mide 2). Lo arma `tools/cw_casas.py`.
 
@@ -8,12 +8,21 @@ Sacado del video de Thalmor City. Medidas en bloques (1 bloque = 0,5 m; el perso
   - muro (186,176,140) · zócalo (98,106,102) · techo (46,86,82) · suelo interior (156,152,138) · entrepiso y techo interior de madera.
 - **Casa**: acera de losas de 2 tonos; la casa queda 2 bloques más alta (zócalo oscuro de 2 que sobresale 1). Muro de 7 de alto por planta; cornisa oscura entre plantas.
 - **Puerta**: hueco de 2×3 **sin hoja** (sistema de abrir y cerrar a futuro), marco de madera oscura, dintel que sobresale, umbral; un escalón de piedra + el zócalo hacen 2 escalones.
-- **Ventanas**: 2×2, alféizar a 2 del suelo, marco y cruz de madera oscura, vidrio azul, repisa por dentro y **jardinera con flores** por fuera. Pocas por cara (1 o 2), simétricas; alineadas entre plantas. Hueco con Colisión invisible (89).
+- **Ventanas**: 2×2 **abiertas** (sin vidrio: se ve a través), alféizar a 2 del suelo, marco y cruz de madera oscura, repisa por dentro y **jardinera con flores** por fuera. Pocas: 1 o 2 por fachada y planta, simétricas, alineadas entre plantas; no en todas las caras. Hueco con Colisión invisible (89).
 - **Techo**: a cuatro aguas escalonado (cada piso entra 2 bloques), alero de 1, vigas que asoman bajo el alero en los lados largos; por dentro, tablas con vigas.
-- **Chimenea**: hogar (130) en un nicho de 2×3 metido en el muro; cuerpo de piedra de 2 de fondo que sale por fuera y se angosta a 2×2 sobre el alero. El nicho es cerrado: fondo con hollín, lados y campana de piedra; repisa de madera encima.
+- **Chimenea**: nicho de 2×3 y 2 de fondo; el fuego (morillos, leños, brasas, llamas) va al fondo, sin tocar los lados; solera de piedra que entra 0,6, marco de piedra y repisa de madera. Cuerpo exterior de sección constante (4×2) hasta 1 sobre la cumbre, remate centrado con boca de humo. Nicho cerrado: fondo con hollín, lados y campana.
+- **Escaleras**: rectas, 2 de ancho; el hueco del entrepiso corta las vigas (que apoyan en brochales); baranda con pilares y capitel, pasamanos, zócalo y balaustres cada 0,5.
+- **Camas**: cofre a los pies, pegado y mirando hacia afuera.
+- **Carteles colgantes**: a los lados de la puerta (nunca frente a una ventana), de dos caras, con cadenas, marco y símbolo detallado.
+- **Faroles**: de hierro con brazo y voluta, montantes, vidrio que brilla con aro y techito de 3 pisos.
 - **Interior**: una sala grande por planta, muebles contra los muros, alfombra grande de borde a dos tonos, farol de pared, plantas en maceta. Escalera recta de madera de 2 de ancho con baranda arriba.
 - **Pueblo**: losas de 2 tonos, farolas negras de 6, bancos, árbol en jardinera elevada con borde de piedra, puestos con toldo a rayas.
-- **Campos**: terrazas de 1 de desnivel y 10 de fondo, tierra lisa con surcos de dos tonos, borde de pasto, camino de piedra; cultivos cada 2 bloques.
+- **Campos**: terrazas de 1 de desnivel que siguen las curvas de nivel del terreno (en llano quedan rectas); tierra lisa con surcos de dos tonos, labio de 1 sin plantar en cada borde, pasto alrededor, camino de piedra; cultivos cada 2 bloques, uno por nivel.
+
+### Criterio (lo revisa `Casa.revisar()`, el generador se detiene si no se cumple)
+- Paso libre de 3 de fondo (y 1 más a cada lado) delante de cada puerta, por dentro y por fuera; pie y llegada de cada escalera libres; frente del hogar y de los tableros libre.
+- Nada inflamable (madera, tela, plantas) a menos de 2,5 bloques del fuego.
+- Por fuera nada (carteles, faroles, barriles, bancos) tapa una ventana.
 
 ## Reglas anteriores (v0.1.4, sacadas de la Taberna v1)
 

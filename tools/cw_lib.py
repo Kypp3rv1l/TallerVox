@@ -48,6 +48,7 @@ class Obra:
         self.mats = {}           # (x,y,z) -> nombre de material liso
         self.fine = []           # [x0,y0,z0,x1,y1,z1,r,g,b,pat,glow]
         self.placed = []         # [cat,x,y,z,rot,solid]
+        self.finales = []        # funciones que se llaman antes de escribir (vigas, revision de criterio...)
 
     def inside(self, x, y, z):
         return 0 <= x < self.W and 0 <= y < self.H and 0 <= z < self.D
@@ -140,7 +141,10 @@ class Obra:
         return n
 
     # ---- salida ----
-    def escribir(self, ruta, taller="0.1.5"):
+    def escribir(self, ruta, taller="0.1.6"):
+        for fn in self.finales:
+            fn()
+        self.finales = []
         self.piel()
         allc = dict(self.cubes)
         for p in self.mats:

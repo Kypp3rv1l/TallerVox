@@ -1,5 +1,21 @@
 # DEVLOG — Farlands Taller
 
+## v0.1.6
+Correcciones de la revisión de Ivan a las propuestas `cw_`:
+- **Vigas**: ya no cruzan el hueco de la escalera; se cortan y descansan en brochales alrededor del hueco.
+- **Chimenea**: cuerpo de sección constante (sin ensanches ni piezas de otro tono), remate y boca de humo centrados. El fuego va al fondo de un nicho de piedra (morillos, leños, brasas, llamas), con solera, marco de piedra y repisa; ya no toca los bordes ni sale a la sala. No se puede entrar al fuego (colisión).
+- **Cofres** a los pies de cada cama, pegados y mirando hacia afuera (`Casa.cama_con_cofre`).
+- **Baranda** robusta: pilares de 0,26 con capitel en las esquinas y al medio, pasamanos ancho, zócalo, balaustres cada 0,5 y remate contra el muro.
+- **Taberna y Gremio** reordenada: barra lejos del hogar con pasillo para el tabernero, mesa redonda, gremio con 3 de fondo detrás del mostrador para el recepcionista (estantería y cofre), tableros con espacio libre delante. Nada frente a la puerta.
+- **Mostrador** nuevo: paneles enmarcados, zócalo oscuro metido y tapa con vuelo parejo (sin tablas que sobresalen).
+- **Ventanas** abiertas (se ve a través) y muchas menos por fachada.
+- **Carteles** de dos caras: tablones con marco, esquineros, cadenas, brazo con voluta y el símbolo detallado en ambas caras; puestos a los lados de la puerta, nunca frente a una ventana.
+- **Faroles** de hierro detallados (placa, brazo con voluta, gancho, montantes, vidrio con aro, techito de 3 pisos, argolla). Farolas de la plaza con pie escalonado, anillos, ménsulas y farol grande.
+- **Enredaderas** finas: tallos delgados con quiebres, ramitas y hojas chicas de 3 verdes.
+- **Plaza**: árbol más grande (tronco 3x3, copa de 17 de ancho).
+- **Nuevo `cw_campo_ladera`**: campo sobre terreno irregular, terrazas que siguen las curvas de nivel, labio sin plantar y camino en zigzag.
+- **Revisión de criterio** en el generador (`Casa.revisar`): paso libre delante de puertas, escaleras, hogar y tableros; nada inflamable a menos de 2,5 del fuego; nada tapando ventanas por fuera. Si algo no cumple, el generador se detiene y dice qué.
+
 ## v0.1.5
 - **Propuestas estilo Cube World** (sacadas del video de Thalmor City), nuevas en el catálogo con prefijo `cw_`: `cw_casa_1_planta`, `cw_casa_2_plantas`, `cw_taberna_gremio` (la Taberna y Gremio rehecha a esa escala), `cw_campo_terrazas` y `cw_plaza_arbol`. Las casas viejas no se tocaron.
 - Escala de Cube World (personaje de 2 bloques): puerta 2×3 sin hoja, ventana 2×2 con cruz y jardinera, 7 de alto por planta, zócalo oscuro, casa 2 bloques sobre la acera con escalones, techo bajo escalonado verde azulado con vigas bajo el alero.

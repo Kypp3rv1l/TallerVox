@@ -9,7 +9,7 @@ archivos `.json` entendibles, para pegarlas luego en la semilla fija.
 - **Casas del juego ya incluidas** en `catalogo/estructuras` (salón, posada, tiendas, casas, fragua, edificio medieval; 3 variantes de cada una, sacadas de la semilla 1337) para estamparlas o abrirlas y editarlas.
 - Mismas herramientas que el editor de mundo del juego (bloques, pincel, caja, detalles, voxel fino 1/8, catálogo de objetos, mover, pegar).
 
-Versión actual: **0.1.5** (ver `DEVLOG.md`).
+Versión actual: **0.1.6** (ver `DEVLOG.md`).
 
 ## Carpetas
 
